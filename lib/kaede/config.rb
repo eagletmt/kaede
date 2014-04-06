@@ -1,8 +1,9 @@
 require 'pathname'
+require 'redis'
 
 module Kaede
   class Config
-    attr_accessor :twitter
+    attr_accessor :redis, :redis_queue, :twitter
 
     path_attrs = [:b25, :recpt1, :assdumper, :clean_ts, :statvfs, :database_path, :record_dir, :cache_dir, :cabinet_dir]
     attr_reader *path_attrs
@@ -24,6 +25,8 @@ module Kaede
       self.cache_dir = basedir.join('cache')
       self.cabinet_dir = basedir.join('cabinet')
       self.twitter = nil
+      self.redis = Redis.new
+      self.redis_queue = 'jobs'
     end
   end
 end

@@ -1,3 +1,4 @@
+require 'redis'
 require 'twitter'
 
 Kaede.configure do |config|
@@ -10,6 +11,8 @@ Kaede.configure do |config|
   config.record_dir = '/home/pt'
   config.cache_dir = '/home/pt/cache'
   config.cabinet_dir = '/home/pt'
+  config.redis = Redis.new(db: 1)
+  config.redis_queue = 'jobs'
   config.twitter = Twitter::REST::Client.new do |config|
     config.consumer_key = 'CONSUMER_KEY'
     config.consumer_secret = 'CONSUMER_SECRET'

@@ -19,6 +19,7 @@ Or install it yourself as:
 ## Usage
 ### Requirements
 - sqlite3
+- redis
 - systemd
 - recpt1
 - b25

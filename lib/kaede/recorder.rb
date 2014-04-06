@@ -107,10 +107,8 @@ module Kaede
         raise "clean-ts failure: #{fname}"
       end
 
-      puts "redis-cli #{fname}.ts"
-      unless system('redis-cli', '-n', '1', 'RPUSH', 'jobs', fname)
-        raise "redis-cli failure: #{fname}"
-      end
+      puts "redis #{fname}.ts"
+      Kaede.config.redis.rpush(Kaede.config.redis_queue, fname)
 
       FileUtils.rm(Kaede.config.cache_dir.join("#{fname}.cache.ts").to_s)
     end
