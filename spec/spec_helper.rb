@@ -1,9 +1,14 @@
+require 'coveralls'
 require 'simplecov'
 require 'timecop'
 require 'tmpdir'
 require 'vcr'
 require 'webmock/rspec'
 
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter,
+]
 SimpleCov.start do
   add_filter Bundler.bundle_path.to_s
   add_filter File.dirname(__FILE__)
