@@ -67,7 +67,7 @@ module Kaede
     def load_config
       require 'kaede'
       if path = options[:config]
-        load path
+        load File.realpath(path)
       end
     end
   end
