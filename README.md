@@ -79,6 +79,17 @@ Reload schedules (usually not needed).
 sudo systemctl kill -s HUP kaede.service
 ```
 
+## What recorder does
+1. Post the earlier tweet (optional).
+2. Record the program into `record_dir` by recpt1.
+    - At the same time, decode into `cache_dir` by b25.
+    - At the same time, dump ass into `cache_dir` by assdumper.
+3. Post the later tweet (optional).
+4. Clean the recorded TS (in `cache_dir`) into `cabinet_dir`.
+5. Move dumped ass (in `cache_dir`) into `cabinet_dir`.
+6. Enqueue the filename into `redis_queue`.
+    - Use it as an encoder queue.
+
 ## Contributing
 
 1. Fork it ( https://github.com/eagletmt/kaede/fork )
