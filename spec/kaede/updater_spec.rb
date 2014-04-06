@@ -25,6 +25,14 @@ describe Kaede::Updater do
     before do
       db.add_channel(channel)
       db.add_tracking_title(tracking_tid)
+
+      allow(updater).to receive(:find_scheduler_pid).and_return(0)
+      @orig_stderr = $stderr
+      $stderr = open(File::NULL, 'w')
+    end
+
+    after do
+      $stderr = @orig_stderr
     end
 
     it 'inserts new jobs' do

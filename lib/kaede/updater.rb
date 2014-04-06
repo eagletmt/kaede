@@ -54,12 +54,16 @@ module Kaede
     end
 
     def reload_scheduler
-      pid = `systemctl show -p MainPID kaede.service`[/MainPID=(\d+)/, 1].to_i
+      pid = find_scheduler_pid
       if pid == 0
         $stderr.puts "MainPID???"
       else
         Process.kill(:HUP, pid)
       end
+    end
+
+    def find_scheduler_pid
+      `systemctl show -p MainPID kaede.service`[/MainPID=(\d+)/, 1].to_i
     end
   end
 end
