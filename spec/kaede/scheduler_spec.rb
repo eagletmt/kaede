@@ -45,11 +45,11 @@ describe Kaede::Scheduler do
             end
           end
         end
-        expect(db.get_jobs.size).to eq(0)
       ensure
         Process.kill(:INT, pid)
         Process.waitpid(pid)
       end
+      expect(db.get_jobs.size).to eq(0)
     end
   end
 end
