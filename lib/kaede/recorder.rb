@@ -88,8 +88,6 @@ module Kaede
       tweet("#{format_title(program)}を録画する")
     end
 
-    NO_ASS_CHANNELS = %w[MX tvk BS11]
-
     def after_record(program, path)
       tweet_after_record(program, path)
 
