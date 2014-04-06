@@ -1,4 +1,5 @@
 # Kaede
+[![Build Status](https://api.travis-ci.org/eagletmt/kaede.svg)](https://travis-ci.org/eagletmt/kaede)
 
 Scheduler for recpt1 recorder using [Syoboi Calendar](http://cal.syoboi.jp/).
 
