@@ -8,6 +8,8 @@ module Kaede
     def setup(db)
       @db = db
       setup_signals
+      $stdout.sync = true
+      $stderr.sync = true
       puts "Start #{Process.pid}"
     end
 
