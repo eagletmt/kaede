@@ -30,4 +30,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "sleepy_penguin"
   spec.add_dependency "sqlite3"
   spec.add_dependency "thor"
+  spec.add_dependency "twitter"
 end
