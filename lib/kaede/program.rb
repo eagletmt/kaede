@@ -1,3 +1,5 @@
+# coding: utf-8
+
 module Kaede
   class Program < Struct.new(:pid, :tid, :start_time, :end_time, :channel_name, :channel_for_syoboi, :channel_for_recorder, :count, :start_offset, :subtitle, :title, :comment)
     def self.from_xml(doc)
