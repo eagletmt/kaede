@@ -69,14 +69,14 @@ kaede update -c kaede.rb
 List schedules (needs improvements).
 
 ```sh
-sudo systemctl kill -s USR1 kaede.service
+sudo systemctl kill -s USR1 --kill-who main kaede.service
 sudo journalctl -u kaede.service
 ```
 
 Reload schedules (usually not needed).
 
 ```sh
-sudo systemctl kill -s HUP kaede.service
+sudo systemctl kill -s HUP --kill-who main kaede.service
 ```
 
 ## What recorder does
