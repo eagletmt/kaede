@@ -1,0 +1,6 @@
+#!/bin/sh
+shift
+shift
+shift
+
+exec rev "$1" > "$2"

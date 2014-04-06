@@ -1,5 +1,6 @@
 require 'simplecov'
 require 'timecop'
+require 'tmpdir'
 require 'vcr'
 require 'webmock/rspec'
 
@@ -29,5 +30,16 @@ RSpec.configure do |config|
   config.mock_with :rspec do |mocks|
     mocks.syntax = :expect
     mocks.verify_partial_doubles = true
+  end
+
+  config.before :each do
+    @topdir = Pathname.new(__FILE__).parent
+  end
+
+  config.around :each do |example|
+    Dir.mktmpdir('kaede') do |dir|
+      @tmpdir = Pathname.new(dir)
+      example.run
+    end
   end
 end
