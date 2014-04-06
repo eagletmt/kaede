@@ -1,6 +1,6 @@
 # Kaede
 
-TODO: Write a gem description
+Scheduler for recpt1 recorder using [Syoboi Calendar](http://cal.syoboi.jp/).
 
 ## Installation
 
@@ -17,8 +17,29 @@ Or install it yourself as:
     $ gem install kaede
 
 ## Usage
+### Requirements
+- sqlite3
+- systemd
+- recpt1
+- b25
+- [statvfs](https://github.com/eagletmt/misc/blob/master/statvfs.c)
+- [clean-ts](https://github.com/eagletmt/misc/tree/master/mm/clean-ts)
+- assdumper
 
-TODO: Write usage instructions here
+Some of them should be optional, though.
+
+### Setup
+```sh
+cp kaede.rb.sample kaede.rb
+vim kaede.rb
+
+cp kaede.service.sample kaede.service
+vim kaede.service
+
+sudo cp kaede.service /etc/systemd/system/kaede.service
+sudo systemctl enable kaede.service
+sudo systemctl start kaede.service
+```
 
 ## Contributing
 

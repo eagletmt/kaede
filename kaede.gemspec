@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = Kaede::VERSION
   spec.authors       = ["Kohei Suzuki"]
   spec.email         = ["eagletmt@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
-  spec.homepage      = ""
+  spec.summary       = %q{Scheduler for recpt1 recorder using Syoboi Calendar}
+  spec.description   = %q{Scheduler for recpt1 recorder using Syoboi Calendar}
+  spec.homepage      = "https://github.com/eagletmt/kaede"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
