@@ -44,6 +44,41 @@ sudo systemctl enable kaede.service
 sudo systemctl start kaede.service
 ```
 
+Add your available channels.
+
+```sh
+kaede add-channel MX -c kaede.rb --recorder 16 --syoboi 19
+kaede add-channel BS11 -c kaede.rb --recorder 211 --syoboi 128
+...
+```
+
+Add your favorite anime tids.
+
+```sh
+kaede add-tid -c kaede.rb 3331
+...
+```
+
+### Operations
+Update programs and schedules. It supposed to be run periodically (by cron or systemd.timer).
+
+```sh
+kaede update -c kaede.rb
+```
+
+List schedules (needs improvements).
+
+```sh
+sudo systemctl kill -s USR1 kaede.service
+sudo journalctl -u kaede.service
+```
+
+Reload schedules (usually not needed).
+
+```sh
+sudo systemctl kill -s HUP kaede.service
+```
+
 ## Contributing
 
 1. Fork it ( https://github.com/eagletmt/kaede/fork )
