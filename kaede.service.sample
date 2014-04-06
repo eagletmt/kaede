@@ -1,0 +1,14 @@
+[Unit]
+Description=Kaede Recorder
+
+[Service]
+WorkingDirectory=/home/eagletmt/work/kaede
+User=eagletmt
+ExecStart=/usr/bin/bundle exec bin/kaede scheduler -c kaede.rb
+ExecReload=/usr/bin/kill -HUP $MAINPID
+Restart=always
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
