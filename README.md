@@ -25,9 +25,9 @@ Or install it yourself as:
 - systemd
 - recpt1
 - b25
-- [statvfs](https://github.com/eagletmt/misc/blob/master/statvfs.c)
-- [clean-ts](https://github.com/eagletmt/misc/tree/master/mm/clean-ts)
-- assdumper
+- [statvfs](https://github.com/eagletmt/eagletmt-recutils/tree/master/statvfs)
+- [clean-ts](https://github.com/eagletmt/eagletmt-recutils/tree/master/clean-ts)
+- [assdumper](https://github.com/eagletmt/eagletmt-recutils/tree/master/assdumper)
 
 Some of them should be optional, though.
 
@@ -89,6 +89,7 @@ sudo systemctl kill -s HUP --kill-who main kaede.service
 5. Move dumped ass (in `cache_dir`) into `cabinet_dir`.
 6. Enqueue the filename into `redis_queue`.
     - Use it as an encoder queue.
+    - My usage: https://github.com/eagletmt/eagletmt-recutils/tree/master/encoder
 
 ## Contributing
 
