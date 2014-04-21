@@ -1,6 +1,7 @@
 require 'dbus'
 require 'thread'
 require 'sleepy_penguin'
+require 'kaede/dbus'
 require 'kaede/dbus/program'
 require 'kaede/dbus/scheduler'
 
@@ -75,10 +76,9 @@ module Kaede
       end
     end
 
-    DBUS_DESTINATION = 'cc.wanko.kaede1'
     def start_dbus
       bus = ::DBus.session_bus
-      service = bus.request_service(DBUS_DESTINATION)
+      service = bus.request_service(DBus::DESTINATION)
 
       programs = @db.get_programs_from_job_ids(@timerfds.values.map { |_, id| id })
       @timerfds.each_value do |tfd, id|
@@ -112,7 +112,7 @@ module Kaede
       end
       @dbus_main = nil
       @dbus_thread = nil
-      ::DBus.session_bus.proxy.ReleaseName(DBUS_DESTINATION)
+      ::DBus.session_bus.proxy.ReleaseName(DBus::DESTINATION)
     end
 
     def spawn_recorder(job_id)
