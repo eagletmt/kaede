@@ -2,6 +2,7 @@ require 'dbus'
 require 'thread'
 require 'sleepy_penguin'
 require 'kaede/dbus/program'
+require 'kaede/dbus/scheduler'
 
 module Kaede
   module Scheduler
@@ -17,7 +18,6 @@ module Kaede
 
     def setup_signals
       @reload_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
-      trap(:HUP) { @reload_event.incr(1) }
 
       @stop_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
       trap(:INT) { @stop_event.incr(1) }
@@ -79,12 +79,16 @@ module Kaede
     def start_dbus
       bus = ::DBus.session_bus
       service = bus.request_service(DBUS_DESTINATION)
+
       programs = @db.get_programs_from_job_ids(@timerfds.values.map { |_, id| id })
       @timerfds.each_value do |tfd, id|
         _, value = tfd.gettime
         program = programs[id]
         service.export(DBus::Program.new(program))
       end
+
+      service.export(DBus::Scheduler.new(@reload_event))
+
       @dbus_main = ::DBus::Main.new
       @dbus_main << bus
       @dbus_thread = Thread.start do
