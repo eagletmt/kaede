@@ -22,7 +22,7 @@ Or install it yourself as:
 ### Requirements
 - sqlite3
 - redis
-- systemd
+- dbus
 - recpt1
 - b25
 - [statvfs](https://github.com/eagletmt/eagletmt-recutils/tree/master/statvfs)
