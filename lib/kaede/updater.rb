@@ -57,7 +57,7 @@ module Kaede
     end
 
     def reload_scheduler
-      service = ::DBus.session_bus.service(DBus::DESTINATION)
+      service = ::DBus.system_bus.service(DBus::DESTINATION)
       scheduler = service.object(DBus::Scheduler::PATH)
       scheduler.introspect
       scheduler.Reload

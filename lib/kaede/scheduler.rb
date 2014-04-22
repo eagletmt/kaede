@@ -77,7 +77,7 @@ module Kaede
     end
 
     def start_dbus
-      bus = ::DBus.session_bus
+      bus = ::DBus.system_bus
       service = bus.request_service(DBus::DESTINATION)
 
       programs = @db.get_programs_from_job_ids(@timerfds.values.map { |_, id| id })
@@ -112,7 +112,7 @@ module Kaede
       end
       @dbus_main = nil
       @dbus_thread = nil
-      ::DBus.session_bus.proxy.ReleaseName(DBus::DESTINATION)
+      ::DBus.system_bus.proxy.ReleaseName(DBus::DESTINATION)
     end
 
     def spawn_recorder(job_id)
