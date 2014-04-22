@@ -26,7 +26,7 @@ describe Kaede::Updater do
       db.add_channel(channel)
       db.add_tracking_title(tracking_tid)
 
-      allow(updater).to receive(:find_scheduler_pid).and_return(0)
+      allow(updater).to receive(:reload_scheduler)
       @orig_stderr = $stderr
       $stderr = open(File::NULL, 'w')
     end
