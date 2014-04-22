@@ -33,6 +33,9 @@ Some of them should be optional, though.
 
 ### Setup
 ```sh
+kaede dbus-policy $KAEDE_USER > kaede.conf
+sudo mv kaede.conf /etc/dbus-1/system.d/kaede.conf
+
 cp kaede.rb.sample kaede.rb
 vim kaede.rb
 
