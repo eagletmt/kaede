@@ -84,7 +84,17 @@ module Kaede
       @timerfds.each_value do |tfd, id|
         _, value = tfd.gettime
         program = programs[id]
-        service.export(DBus::Program.new(program))
+        obj = DBus::Program.new(program)
+        service.export(obj)
+
+        # ruby-dbus doesn't emit properties when Introspect is requested.
+        # Kaede manually creates Introspect XML so that `gdbus introspect` outputs properties.
+        node = service.get_node(obj.path)
+        node.singleton_class.class_eval do
+          define_method :to_xml do
+            obj.to_xml
+          end
+        end
       end
 
       service.export(DBus::Scheduler.new(@reload_event))
