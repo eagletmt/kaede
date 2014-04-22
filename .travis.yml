@@ -6,6 +6,8 @@ rvm:
   - ruby-head
 before_install:
   - export NOKOGIRI_USE_SYSTEM_LIBRARIES=1
+before_script:
+  - sudo sh -c 'bundle exec bin/kaede dbus-policy $USER > /etc/dbus-1/system.d/kaede.conf'
 matrix:
   allow_failures:
     - rvm: ruby-head

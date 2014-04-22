@@ -62,6 +62,13 @@ module Kaede
       Kaede::Updater.new(db, syobocal).update
     end
 
+    desc 'dbus-policy USER', 'Generate dbus policy file'
+    def dbus_policy(user)
+      require 'kaede/dbus/generator'
+
+      puts DBus::Generator.new.generate_policy(user)
+    end
+
     private
 
     def load_config
