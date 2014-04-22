@@ -6,7 +6,7 @@ module Kaede
     class Generator
       def generate_policy(user)
         Nokogiri::XML::Builder.new do |xml|
-          xml.comment 'Put this policy configuration file into /etc/dbus-1/systemd.d'
+          xml.comment 'Put this policy configuration file into /etc/dbus-1/system.d'
           xml.doc.create_internal_subset(
             'busconfig',
             '-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN',
