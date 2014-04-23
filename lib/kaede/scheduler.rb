@@ -84,7 +84,7 @@ module Kaede
       @timerfds.each_value do |tfd, id|
         _, value = tfd.gettime
         program = programs[id]
-        obj = DBus::Program.new(program)
+        obj = DBus::Program.new(program, Time.now + value)
         service.export(obj)
 
         # ruby-dbus doesn't emit properties when Introspect is requested.

@@ -10,9 +10,10 @@ module Kaede
       INTROSPECT_INTERFACE = 'org.freedesktop.DBus.Introspectable'
       PROGRAM_INTERFACE = 'cc.wanko.kaede1.Program'
 
-      def initialize(program)
+      def initialize(program, enqueued_at)
         super("#{PATH}/#{program.pid}")
         @program = program
+        @enqueued_at = enqueued_at
       end
 
       def to_xml
@@ -104,6 +105,7 @@ module Kaede
           'SubTitle' => @program.subtitle,
           'Title' => @program.title,
           'Comment' => @program.comment,
+          'EnqueuedAt' => @enqueued_at.iso8601,
         }
       end
 
