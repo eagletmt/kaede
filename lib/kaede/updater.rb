@@ -1,4 +1,7 @@
+require 'dbus'
 require 'set'
+require 'kaede/dbus'
+require 'kaede/dbus/scheduler'
 
 module Kaede
   class Updater
@@ -54,16 +57,10 @@ module Kaede
     end
 
     def reload_scheduler
-      pid = find_scheduler_pid
-      if pid == 0
-        $stderr.puts "MainPID???"
-      else
-        Process.kill(:HUP, pid)
-      end
-    end
-
-    def find_scheduler_pid
-      `systemctl show -p MainPID kaede.service`[/MainPID=(\d+)/, 1].to_i
+      service = ::DBus.system_bus.service(DBus::DESTINATION)
+      scheduler = service.object(DBus::Scheduler::PATH)
+      scheduler.introspect
+      scheduler.Reload
     end
   end
 end

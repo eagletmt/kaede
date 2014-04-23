@@ -1,5 +1,9 @@
+require 'dbus'
 require 'thread'
 require 'sleepy_penguin'
+require 'kaede/dbus'
+require 'kaede/dbus/program'
+require 'kaede/dbus/scheduler'
 
 module Kaede
   module Scheduler
@@ -15,13 +19,9 @@ module Kaede
 
     def setup_signals
       @reload_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
-      trap(:HUP) { @reload_event.incr(1) }
 
       @stop_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
       trap(:INT) { @stop_event.incr(1) }
-
-      @list_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
-      trap(:USR1) { @list_event.incr(1) }
     end
 
     def start
@@ -36,31 +36,32 @@ module Kaede
       epoll = SleepyPenguin::Epoll.new
       epoll.add(@reload_event, [:IN])
       epoll.add(@stop_event, [:IN])
-      epoll.add(@list_event, [:IN])
 
-      timerfds = {}
+      @timerfds = {}
       @db.get_jobs.each do |job|
         tfd = SleepyPenguin::TimerFD.new(:REALTIME)
         tfd.settime(:ABSTIME, 0, job[:enqueued_at].to_i)
         epoll.add(tfd, [:IN])
-        timerfds[tfd.fileno] = [tfd, job[:id]]
+        @timerfds[tfd.fileno] = [tfd, job[:id]]
       end
-      puts "Loaded #{timerfds.size} schedules"
+      puts "Loaded #{@timerfds.size} schedules"
+      start_dbus
 
       catch(:reload) do
-        epoll_loop(epoll, timerfds)
+        epoll_loop(epoll)
       end
     ensure
       epoll.close
+      stop_dbus
     end
 
-    def epoll_loop(epoll, timerfds)
+    def epoll_loop(epoll)
       loop do
         epoll.wait do |events, io|
           case io
           when SleepyPenguin::TimerFD
             io.expirations
-            _, id = timerfds.delete(io.fileno)
+            _, id = @timerfds.delete(io.fileno)
             spawn_recorder(id)
           when @reload_event
             io.value
@@ -68,24 +69,60 @@ module Kaede
           when @stop_event
             io.value
             throw :stop
-          when @list_event
-            io.value
-            if timerfds.empty?
-              puts "No schedules"
-            else
-              programs = @db.get_programs_from_job_ids(timerfds.values.map { |_, id| id })
-              timerfds.each_value do |tfd, id|
-                _, value = tfd.gettime
-                program = programs[id]
-                puts "Invoke #{id} at #{Time.now + value}: #{program.syoboi_url}"
-                puts "    #{program.formatted_fname}"
-              end
-            end
           else
             abort "Unknown IO: #{io.inspect}"
           end
         end
       end
+    end
+
+    def start_dbus
+      bus = ::DBus.system_bus
+      service = bus.request_service(DBus::DESTINATION)
+
+      programs = @db.get_programs_from_job_ids(@timerfds.values.map { |_, id| id })
+      @timerfds.each_value do |tfd, id|
+        _, value = tfd.gettime
+        program = programs[id]
+        obj = DBus::Program.new(program, Time.now + value)
+        service.export(obj)
+
+        # ruby-dbus doesn't emit properties when Introspect is requested.
+        # Kaede manually creates Introspect XML so that `gdbus introspect` outputs properties.
+        node = service.get_node(obj.path)
+        node.singleton_class.class_eval do
+          define_method :to_xml do
+            obj.to_xml
+          end
+        end
+      end
+
+      service.export(DBus::Scheduler.new(@reload_event))
+
+      @dbus_main = ::DBus::Main.new
+      @dbus_main << bus
+      @dbus_thread = Thread.start do
+        @dbus_main.run
+      end
+    end
+
+    DBUS_STOP_TIMEOUT = 5
+    def stop_dbus
+      return unless @dbus_main
+      @dbus_main.quit
+      begin
+        unless @dbus_thread.join(DBUS_STOP_TIMEOUT)
+          @dbus_thread.kill
+        end
+      rescue Exception => e
+        $stderr.puts "Exception on DBus thread: #{e.class}: #{e.message}"
+        e.backtrace.each do |bt|
+          $stderr.puts "  #{bt}"
+        end
+      end
+      @dbus_main = nil
+      @dbus_thread = nil
+      ::DBus.system_bus.proxy.ReleaseName(DBus::DESTINATION)
     end
 
     def spawn_recorder(job_id)

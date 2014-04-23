@@ -22,7 +22,7 @@ Or install it yourself as:
 ### Requirements
 - sqlite3
 - redis
-- systemd
+- dbus
 - recpt1
 - b25
 - [statvfs](https://github.com/eagletmt/eagletmt-recutils/tree/master/statvfs)
@@ -33,6 +33,9 @@ Some of them should be optional, though.
 
 ### Setup
 ```sh
+kaede dbus-policy $KAEDE_USER > kaede.conf
+sudo mv kaede.conf /etc/dbus-1/system.d/kaede.conf
+
 cp kaede.rb.sample kaede.rb
 vim kaede.rb
 
@@ -66,17 +69,16 @@ Update programs and schedules. It supposed to be run periodically (by cron or sy
 kaede update -c kaede.rb
 ```
 
-List schedules (needs improvements).
+List schedules.
 
 ```sh
-sudo systemctl kill -s USR1 --kill-who main kaede.service
-sudo journalctl -u kaede.service
+gdbus introspect --system --dest cc.wanko.kaede1 --object-path /cc/wanko/kaede1/program -r
 ```
 
 Reload schedules (usually not needed).
 
 ```sh
-sudo systemctl kill -s HUP --kill-who main kaede.service
+dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Reload
 ```
 
 ## What recorder does
