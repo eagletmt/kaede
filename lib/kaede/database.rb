@@ -72,8 +72,8 @@ CREATE TABLE IF NOT EXISTS tracking_titles (
       end
     end
 
-    def add_job(pid, enqueued_at)
-      @db.execute('INSERT INTO jobs (pid, enqueued_at, created_at) VALUES (?, ?, ?)', [pid, to_db_datetime(enqueued_at), current_timestamp])
+    def update_job(pid, enqueued_at)
+      @db.execute('INSERT OR REPLACE INTO jobs (pid, enqueued_at, created_at) VALUES (?, ?, ?)', [pid, to_db_datetime(enqueued_at), current_timestamp])
     end
 
     def delete_job(id)

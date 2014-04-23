@@ -28,7 +28,7 @@ describe Kaede::Recorder do
     channel = db.get_channels.first
     program = Kaede::Program.new(1234, 5678, Time.now, Time.now + duration, nil, 19, 9, '6', 0, 'sub', 'title', 'comment')
     db.update_program(program, channel)
-    db.add_job(program.pid, Time.now + 5)
+    db.update_job(program.pid, Time.now + 5)
 
     Kaede.configure do |config|
       config.redis = double('redis')

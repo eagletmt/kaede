@@ -37,7 +37,7 @@ describe Kaede::Updater do
 
     it 'inserts new jobs' do
       VCR.use_cassette('cal_chk/days7') do
-        expect { updater.update }.to output(/Insert job for #{expected_pid}/).to_stdout
+        updater.update
       end
 
       jobs = db.get_jobs
@@ -45,6 +45,20 @@ describe Kaede::Updater do
       job = jobs[0]
       expect(job[:pid]).to eq(expected_pid)
       expect(job[:enqueued_at]).to eq(expected_enqueued_at)
+    end
+
+    it 'updates existing job' do
+      dummy_time = Time.local(2014, 3, 6, 20, 29, 45)
+
+      VCR.use_cassette('cal_chk/days7') do
+        updater.update
+      end
+      db.update_job(expected_pid, dummy_time)
+      expect(db.get_jobs[0][:enqueued_at]).to eq(dummy_time)
+      VCR.use_cassette('cal_chk/days7') do
+        updater.update
+      end
+      expect(db.get_jobs[0][:enqueued_at]).to eq(expected_enqueued_at)
     end
   end
 end

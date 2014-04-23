@@ -42,18 +42,13 @@ module Kaede
     def update_program(program, channel, tracking_titles)
       @db.update_program(program, channel)
       if tracking_titles.include?(program.tid)
-        add_job_for(program)
+        update_job_for(program)
       end
     end
 
     JOB_TIME_GAP = 15 # seconds
-    def add_job_for(program)
-      @db.add_job(program.pid, program.start_time + program.start_offset - JOB_TIME_GAP)
-      puts "Insert job for #{program.pid}"
-    rescue SQLite3::ConstraintException => e
-      if e.message != 'UNIQUE constraint failed: jobs.pid'
-        raise e
-      end
+    def update_job_for(program)
+      @db.update_job(program.pid, program.start_time + program.start_offset - JOB_TIME_GAP)
     end
 
     def reload_scheduler

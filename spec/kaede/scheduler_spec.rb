@@ -18,7 +18,7 @@ describe Kaede::Scheduler do
       db.add_channel(Kaede::Channel.new(nil, 'MX', 9, 19))
       channel = db.get_channels.first
       db.update_program(program, channel)
-      db.add_job(program.pid, Time.now + 5)
+      db.update_job(program.pid, Time.now + 5)
     end
 
     it 'works' do
