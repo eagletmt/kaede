@@ -36,8 +36,7 @@ CREATE TABLE IF NOT EXISTS programs (
   FOREIGN KEY(channel_id) REFERENCES channels(id)
 );
 CREATE TABLE IF NOT EXISTS jobs (
-  id integer PRIMARY KEY AUTOINCREMENT,
-  pid integer NOT NULL UNIQUE,
+  pid integer PRIMARY KEY,
   enqueued_at datetime NOT NULL,
   finished_at datetime,
   created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -67,8 +66,8 @@ CREATE TABLE IF NOT EXISTS tracking_titles (
     private :current_timestamp
 
     def get_jobs
-      @db.execute('SELECT id, pid, enqueued_at FROM jobs WHERE finished_at IS NULL AND enqueued_at >= ? ORDER BY enqueued_at', [current_timestamp]).map do |id, pid, enqueued_at|
-        { id: id, pid: pid, enqueued_at: from_db_datetime(enqueued_at) }
+      @db.execute('SELECT pid, enqueued_at FROM jobs WHERE finished_at IS NULL AND enqueued_at >= ? ORDER BY enqueued_at', [current_timestamp]).map do |pid, enqueued_at|
+        { pid: pid, enqueued_at: from_db_datetime(enqueued_at) }
       end
     end
 
@@ -76,35 +75,33 @@ CREATE TABLE IF NOT EXISTS tracking_titles (
       @db.execute('INSERT OR REPLACE INTO jobs (pid, enqueued_at, created_at) VALUES (?, ?, ?)', [pid, to_db_datetime(enqueued_at), current_timestamp])
     end
 
-    def delete_job(id)
-      @db.execute('DELETE FROM jobs WHERE id = ?', id)
+    def delete_job(pid)
+      @db.execute('DELETE FROM jobs WHERE pid = ?', pid)
     end
 
-    def get_program_from_job_id(id)
-      get_programs_from_job_ids([id])[id]
+    def get_program(pid)
+      get_programs([pid])[pid]
     end
 
-    def get_programs_from_job_ids(ids)
+    def get_programs(pids)
       rows = @db.execute(<<-SQL)
-SELECT jobs.id, jobs.pid, tid, start_time, end_time, channels.name, for_syoboi, for_recorder, count, start_offset, subtitle, title, comment
-FROM jobs
-INNER JOIN programs ON jobs.pid = programs.pid
+SELECT pid, tid, start_time, end_time, channels.name, for_syoboi, for_recorder, count, start_offset, subtitle, title, comment
+FROM programs
 INNER JOIN channels ON programs.channel_id = channels.id
-WHERE jobs.id IN (#{ids.join(', ')})
+WHERE programs.pid IN (#{pids.join(', ')})
       SQL
       programs = {}
       rows.each do |row|
-        job_id = row.shift
         program = Program.new(*row)
         program.start_time = from_db_datetime(program.start_time)
         program.end_time = from_db_datetime(program.end_time)
-        programs[job_id] = program
+        programs[program.pid] = program
       end
       programs
     end
 
-    def mark_finished(id)
-      @db.execute('UPDATE jobs SET finished_at = ? WHERE id = ?', [current_timestamp, id])
+    def mark_finished(pid)
+      @db.execute('UPDATE jobs SET finished_at = ? WHERE pid = ?', [current_timestamp, pid])
     end
 
     def get_channels

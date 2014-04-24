@@ -9,7 +9,7 @@ describe Kaede::Recorder do
   let(:recorder) { described_class.new }
   let(:db) { Kaede::Database.new(':memory:') }
   let(:job) { db.get_jobs.first }
-  let(:program) { db.get_program_from_job_id(job[:id]) }
+  let(:program) { db.get_program(job[:pid]) }
   let(:duration) { 30 }
 
   let(:fname) { '5678_1234' }
@@ -50,7 +50,7 @@ describe Kaede::Recorder do
       expect(recorder).to receive(:do_record).ordered.with(program, instance_of(Pathname), instance_of(Fixnum))
       expect(recorder).to receive(:after_record).ordered.with(program, instance_of(Pathname))
 
-      expect { recorder.record(db, job[:id]) }.to output(/Start #{job[:id]}.*Done #{job[:id]}/m).to_stdout
+      expect { recorder.record(db, job[:pid]) }.to output(/Start #{job[:pid]}.*Done #{job[:pid]}/m).to_stdout
     end
   end
 

@@ -32,8 +32,8 @@ module Kaede
       end
 
       jobs.each_value do |job|
-        puts "Program #{job[:pid]} has gone away. Delete its job #{job[:id]}"
-        @db.delete_job(job[:id])
+        puts "Program #{job[:pid]} has gone away. Delete its job"
+        @db.delete_job(job[:pid])
       end
 
       reload_scheduler

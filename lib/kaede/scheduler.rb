@@ -42,7 +42,7 @@ module Kaede
         tfd = SleepyPenguin::TimerFD.new(:REALTIME)
         tfd.settime(:ABSTIME, 0, job[:enqueued_at].to_i)
         epoll.add(tfd, [:IN])
-        @timerfds[tfd.fileno] = [tfd, job[:id]]
+        @timerfds[tfd.fileno] = [tfd, job[:pid]]
       end
       puts "Loaded #{@timerfds.size} schedules"
       start_dbus
@@ -61,8 +61,8 @@ module Kaede
           case io
           when SleepyPenguin::TimerFD
             io.expirations
-            _, id = @timerfds.delete(io.fileno)
-            spawn_recorder(id)
+            _, pid = @timerfds.delete(io.fileno)
+            spawn_recorder(pid)
           when @reload_event
             io.value
             throw :reload
@@ -80,10 +80,10 @@ module Kaede
       bus = ::DBus.system_bus
       service = bus.request_service(DBus::DESTINATION)
 
-      programs = @db.get_programs_from_job_ids(@timerfds.values.map { |_, id| id })
-      @timerfds.each_value do |tfd, id|
+      programs = @db.get_programs(@timerfds.values.map { |_, pid| pid })
+      @timerfds.each_value do |tfd, pid|
         _, value = tfd.gettime
-        program = programs[id]
+        program = programs[pid]
         obj = DBus::Program.new(program, Time.now + value)
         service.export(obj)
 
@@ -125,14 +125,14 @@ module Kaede
       ::DBus.system_bus.proxy.ReleaseName(DBus::DESTINATION)
     end
 
-    def spawn_recorder(job_id)
+    def spawn_recorder(pid)
       Thread.start do
         begin
           require 'kaede/recorder'
-          Recorder.new.record(@db, job_id)
-          @db.mark_finished(job_id)
+          Recorder.new.record(@db, pid)
+          @db.mark_finished(pid)
         rescue Exception => e
-          $stderr.puts "Failed job #{job_id}: #{e.class}: #{e.message}"
+          $stderr.puts "Failed job for #{pid}: #{e.class}: #{e.message}"
           e.backtrace.each do |bt|
             $stderr.puts "  #{bt}"
           end

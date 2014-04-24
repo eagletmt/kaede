@@ -10,17 +10,17 @@ module Kaede
       @twitter = Kaede.config.twitter
     end
 
-    def record(db, job_id)
-      program = db.get_program_from_job_id(job_id)
+    def record(db, pid)
+      program = db.get_program(pid)
       before_record(program)
 
-      puts "Start #{job_id} #{program.syoboi_url}"
+      puts "Start #{pid} #{program.syoboi_url}"
       path = Kaede.config.record_dir.join("#{program.tid}_#{program.pid}.ts")
       duration = calculate_duration(program)
       do_record(program, path, duration)
 
-      program = db.get_program_from_job_id(job_id)
-      puts "Done #{job_id} #{program.syoboi_url}"
+      program = db.get_program(pid)
+      puts "Done #{pid} #{program.syoboi_url}"
       after_record(program, path)
     end
 

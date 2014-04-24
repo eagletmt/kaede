@@ -23,8 +23,8 @@ describe Kaede::Scheduler do
 
     it 'works' do
       r, w = IO.pipe
-      allow_any_instance_of(Kaede::Recorder).to receive(:record) { |recorder, db, job_id|
-        program = db.get_program_from_job_id(job_id)
+      allow_any_instance_of(Kaede::Recorder).to receive(:record) { |recorder, db, pid|
+        program = db.get_program(pid)
         puts "Record #{program.pid}"
       }
       pid = fork do
