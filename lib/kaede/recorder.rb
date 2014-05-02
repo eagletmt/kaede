@@ -34,10 +34,6 @@ module Kaede
       Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.raw.ass")
     end
 
-    def cache_fname_path(program)
-      Kaede.config.cache_dir.join("#{program.formatted_fname}.cache.ts")
-    end
-
     def cabinet_path(program)
       Kaede.config.cabinet_dir.join("#{program.formatted_fname}.ts")
     end
