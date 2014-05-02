@@ -137,8 +137,6 @@ module Kaede
     def after_record(program)
       tweet_after_record(program)
 
-      ts_src_path = cache_fname_path(program)
-      FileUtils.mv(cache_path(program).to_s, ts_src_path.to_s)
       ass_path = cache_ass_path(program)
       if ass_path.size == 0
         ass_path.unlink
@@ -147,14 +145,14 @@ module Kaede
       end
 
       puts "clean-ts #{program.formatted_fname}.ts"
-      unless system(Kaede.config.clean_ts.to_s, ts_src_path.to_s, cabinet_path(program).to_s)
+      unless system(Kaede.config.clean_ts.to_s, cache_path(program).to_s, cabinet_path(program).to_s)
         raise "clean-ts failure: #{program.formatted_fname}"
       end
 
       puts "redis #{program.formatted_fname}.ts"
       Kaede.config.redis.rpush(Kaede.config.redis_queue, program.formatted_fname)
 
-      FileUtils.rm(ts_src_path.to_s)
+      FileUtils.rm(cache_path(program).to_s)
     end
 
     def tweet_after_record(program)
