@@ -27,6 +27,26 @@ module Kaede
       Kaede.config.record_dir.join("#{program.tid}_#{program.pid}.ts")
     end
 
+    def cache_path(program)
+      Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.cache.ts")
+    end
+
+    def cache_ass_path(program)
+      Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.raw.ass")
+    end
+
+    def cache_fname_path(program)
+      Kaede.config.cache_dir.join("#{program.formatted_fname}.cache.ts")
+    end
+
+    def cabinet_path(program)
+      Kaede.config.cabinet_dir.join("#{program.formatted_fname}.ts")
+    end
+
+    def cabinet_ass_path(program)
+      Kaede.config.cabinet_dir.join("#{program.formatted_fname}.raw.ass")
+    end
+
     BUFSIZ = 188 * 16
 
     def do_record(program, duration)
@@ -39,11 +59,11 @@ module Kaede
       tail_pipe_w.close
 
       b25_pipe_r, b25_pipe_w = IO.pipe
-      b25_pid = spawn(Kaede.config.b25.to_s, '-v0', '-s1', '-m1', '/dev/stdin', Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.cache.ts").to_s, in: b25_pipe_r)
+      b25_pid = spawn(Kaede.config.b25.to_s, '-v0', '-s1', '-m1', '/dev/stdin', cache_path(program).to_s, in: b25_pipe_r)
       b25_pipe_r.close
 
       ass_pipe_r, ass_pipe_w = IO.pipe
-      ass_pid = spawn(Kaede.config.assdumper.to_s, '/dev/stdin', in: ass_pipe_r, out: Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.raw.ass").to_s)
+      ass_pid = spawn(Kaede.config.assdumper.to_s, '/dev/stdin', in: ass_pipe_r, out: cache_ass_path(program).to_s)
       ass_pipe_r.close
 
       multi = Thread.start do
@@ -95,24 +115,24 @@ module Kaede
     def after_record(program)
       tweet_after_record(program)
 
-      fname = program.formatted_fname
-      FileUtils.mv(Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.cache.ts").to_s, Kaede.config.cache_dir.join("#{fname}.cache.ts").to_s)
-      ass_path = Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.raw.ass")
+      ts_src_path = cache_fname_path(program)
+      FileUtils.mv(cache_path(program).to_s, ts_src_path.to_s)
+      ass_path = cache_ass_path(program)
       if ass_path.size == 0
         ass_path.unlink
       else
-        FileUtils.mv(ass_path.to_s, Kaede.config.cabinet_dir.join("#{fname}.raw.ass").to_s)
+        FileUtils.mv(ass_path.to_s, cabinet_ass_path(program).to_s)
       end
 
-      puts "clean-ts #{fname}.ts"
-      unless system(Kaede.config.clean_ts.to_s, Kaede.config.cache_dir.join("#{fname}.cache.ts").to_s, Kaede.config.cabinet_dir.join("#{fname}.ts").to_s)
-        raise "clean-ts failure: #{fname}"
+      puts "clean-ts #{program.formatted_fname}.ts"
+      unless system(Kaede.config.clean_ts.to_s, ts_src_path.to_s, cabinet_path(program).to_s)
+        raise "clean-ts failure: #{program.formatted_fname}"
       end
 
-      puts "redis #{fname}.ts"
-      Kaede.config.redis.rpush(Kaede.config.redis_queue, fname)
+      puts "redis #{program.formatted_fname}.ts"
+      Kaede.config.redis.rpush(Kaede.config.redis_queue, program.formatted_fname)
 
-      FileUtils.rm(Kaede.config.cache_dir.join("#{fname}.cache.ts").to_s)
+      FileUtils.rm(ts_src_path.to_s)
     end
 
     def tweet_after_record(program)

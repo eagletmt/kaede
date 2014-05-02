@@ -24,6 +24,10 @@ module Kaede
     end
 
     def formatted_fname
+      @formatted_fname ||= format_fname
+    end
+
+    def format_fname
       fname = "#{tid}_#{pid} #{title} ##{count} #{subtitle}#{comment.empty? ? '' : " (#{comment})"} at #{channel_name}"
       fname = fname.gsub('/', '／')
       if fname.bytesize >= 200
@@ -31,6 +35,5 @@ module Kaede
       end
       fname
     end
-
   end
 end

@@ -12,16 +12,15 @@ describe Kaede::Recorder do
   let(:program) { db.get_program(job[:pid]) }
   let(:duration) { 30 }
 
-  let(:fname) { '5678_1234' }
   let(:formatted_fname) { '5678_1234 title #6 sub (comment) at MX' }
   let(:record_dir) { @tmpdir.join('record').tap(&:mkpath) }
   let(:record_path) { recorder.record_path(program) }
   let(:cache_dir) { @tmpdir.join('cache').tap(&:mkpath) }
-  let(:cache_path) { cache_dir.join("#{fname}.cache.ts") }
-  let(:cache_ass_path) { cache_dir.join("#{fname}.raw.ass") }
+  let(:cache_path) { recorder.cache_path(program) }
+  let(:cache_ass_path) { recorder.cache_ass_path(program) }
   let(:cabinet_dir) { @tmpdir.join('cabinet').tap(&:mkpath) }
-  let(:cabinet_path) { cabinet_dir.join("#{formatted_fname}.ts") }
-  let(:cabinet_ass_path) { cabinet_dir.join("#{formatted_fname}.raw.ass") }
+  let(:cabinet_path) { recorder.cabinet_path(program) }
+  let(:cabinet_ass_path) { recorder.cabinet_ass_path(program) }
 
   before do
     db.add_channel(Kaede::Channel.new(nil, 'MX', 9, 19))
