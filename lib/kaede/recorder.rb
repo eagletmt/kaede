@@ -162,13 +162,27 @@ module Kaede
     end
 
     def tweet_after_record(program)
-      path = record_path(program)
-      total, avail = `#{Kaede.config.statvfs} #{Kaede.config.record_dir}`.chomp.split(/\s/, 2).map(&:to_i)
-      avail /= 1024 * 1024 * 1024
-      fsize = path.size.to_f
-      fsize /= 1024 * 1024 * 1024
-      msg = sprintf("%sを録画した。ファイルサイズ約%.2fGB。残り約%dGB\n", format_title(program), fsize, avail)
-      tweet(msg)
+      tweet(
+        sprintf(
+          "%sを録画した。ファイルサイズ約%.2fGB。残り約%dGB\n",
+          format_title(program),
+          ts_filesize(program),
+          available_disk,
+        )
+      )
+    end
+
+    def ts_filesize(program)
+      in_gigabyte(record_path(program).size.to_f)
+    end
+
+    def available_disk
+      _, avail = `#{Kaede.config.statvfs} #{Kaede.config.record_dir}`.chomp.split(/\s/, 2).map(&:to_i)
+      in_gigabyte(avail)
+    end
+
+    def in_gigabyte(size)
+      size / (1024 * 1024 * 1024)
     end
 
     def format_title(program)
