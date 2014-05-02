@@ -34,36 +34,34 @@ module Kaede
       path.open('w') {}
       recpt1_pid = spawn(Kaede.config.recpt1.to_s, program.channel_for_recorder.to_s, duration.to_s, path.to_s)
 
-      IO.pipe(binmode: true) do |r0, w0|
-        tail_pid = spawn('tail', '-f', path.to_s, out: w0)
-        w0.close
+      tail_pipe_r, tail_pipe_w = IO.pipe
+      tail_pid = spawn('tail', '-f', path.to_s, out: tail_pipe_w)
+      tail_pipe_w.close
 
-        IO.pipe do |r1, w1|
-          b25_pid = spawn(Kaede.config.b25.to_s, '-v0', '-s1', '-m1', '/dev/stdin', Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.cache.ts").to_s, in: r1)
-          r1.close
+      b25_pipe_r, b25_pipe_w = IO.pipe
+      b25_pid = spawn(Kaede.config.b25.to_s, '-v0', '-s1', '-m1', '/dev/stdin', Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.cache.ts").to_s, in: b25_pipe_r)
+      b25_pipe_r.close
 
-          IO.pipe do |r2, w2|
-            ass_pid = spawn(Kaede.config.assdumper.to_s, '/dev/stdin', in: r2, out: Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.raw.ass").to_s)
-            r2.close
+      ass_pipe_r, ass_pipe_w = IO.pipe
+      ass_pid = spawn(Kaede.config.assdumper.to_s, '/dev/stdin', in: ass_pipe_r, out: Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.raw.ass").to_s)
+      ass_pipe_r.close
 
-            multi = Thread.start do
-              while buf = r0.read(BUFSIZ)
-                w1.write(buf)
-                w2.write(buf)
-              end
-              w1.close
-              w2.close
-              Process.waitpid(b25_pid)
-              Process.waitpid(ass_pid)
-            end
-
-            Process.waitpid(recpt1_pid)
-            Process.kill(:INT, tail_pid)
-            Process.waitpid(tail_pid)
-            multi.join
-          end
+      multi = Thread.start do
+        while buf = tail_pipe_r.read(BUFSIZ)
+          b25_pipe_w.write(buf)
+          ass_pipe_w.write(buf)
         end
+        tail_pipe_r.close
+        b25_pipe_w.close
+        ass_pipe_w.close
+        Process.waitpid(b25_pid)
+        Process.waitpid(ass_pid)
       end
+
+      Process.waitpid(recpt1_pid)
+      Process.kill(:INT, tail_pid)
+      Process.waitpid(tail_pid)
+      multi.join
     end
 
     def calculate_duration(program)
