@@ -4,6 +4,7 @@ require 'sleepy_penguin'
 require 'kaede/dbus'
 require 'kaede/dbus/program'
 require 'kaede/dbus/scheduler'
+require 'kaede/notifier'
 
 module Kaede
   module Scheduler
@@ -129,7 +130,7 @@ module Kaede
       Thread.start do
         begin
           require 'kaede/recorder'
-          Recorder.new.record(@db, pid)
+          Recorder.new(Notifier.new).record(@db, pid)
           @db.mark_finished(pid)
         rescue Exception => e
           $stderr.puts "Failed job for #{pid}: #{e.class}: #{e.message}"

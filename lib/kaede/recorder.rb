@@ -6,8 +6,8 @@ require 'fileutils'
 
 module Kaede
   class Recorder
-    def initialize
-      @twitter = Kaede.config.twitter
+    def initialize(notifier)
+      @notifier = notifier
     end
 
     def record(db, pid)
@@ -115,23 +115,12 @@ module Kaede
       Process.waitpid(@ass_pid)
     end
 
-    def tweet(text)
-      return unless @twitter
-      Thread.start do
-        begin
-          @twitter.update(text)
-        rescue Exception => e
-          $stderr.puts "Failed to tweet: #{text}: #{e.class}: #{e.message}"
-        end
-      end
-    end
-
     def before_record(program)
-      tweet("#{format_title(program)}を録画する")
+      @notifier.notify_before_record(program)
     end
 
     def after_record(program)
-      tweet_after_record(program)
+      @notifier.notify_after_record(program)
       move_ass_to_cabinet(program)
       clean_ts(program)
       enqueue_to_redis(program)
@@ -155,39 +144,6 @@ module Kaede
 
     def enqueue_to_redis(program)
       Kaede.config.redis.rpush(Kaede.config.redis_queue, program.formatted_fname)
-    end
-
-    def tweet_after_record(program)
-      tweet(
-        sprintf(
-          "%sを録画した。ファイルサイズ約%.2fGB。残り約%dGB\n",
-          format_title(program),
-          ts_filesize(program),
-          available_disk,
-        )
-      )
-    end
-
-    def ts_filesize(program)
-      in_gigabyte(record_path(program).size.to_f)
-    end
-
-    def available_disk
-      _, avail = `#{Kaede.config.statvfs} #{Kaede.config.record_dir}`.chomp.split(/\s/, 2).map(&:to_i)
-      in_gigabyte(avail)
-    end
-
-    def in_gigabyte(size)
-      size / (1024 * 1024 * 1024)
-    end
-
-    def format_title(program)
-      buf = "#{program.channel_name}で「#{program.title}"
-      if program.count
-        buf += " ##{program.count}"
-      end
-      buf += " #{program.subtitle}」"
-      buf
     end
   end
 end

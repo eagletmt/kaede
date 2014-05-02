@@ -6,7 +6,8 @@ require 'kaede/recorder'
 require 'kaede/updater'
 
 describe Kaede::Recorder do
-  let(:recorder) { described_class.new }
+  let(:notifier) { double('Notifier') }
+  let(:recorder) { described_class.new(notifier) }
   let(:db) { Kaede::Database.new(':memory:') }
   let(:job) { db.get_jobs.first }
   let(:program) { db.get_program(job[:pid]) }
@@ -53,13 +54,6 @@ describe Kaede::Recorder do
     end
   end
 
-  describe '#before_record' do
-    it 'tweets' do
-      expect(recorder).to receive(:tweet).with(/title #6 sub/)
-      recorder.before_record(program)
-    end
-  end
-
   describe '#after_record' do
     before do
       record_path.open('w') {}
@@ -67,11 +61,11 @@ describe Kaede::Recorder do
       cache_ass_path.open('w') { |f| f.puts 'ass' }
 
       allow(Kaede.config.redis).to receive(:rpush)
-      $stdout = open(File::NULL, 'w')
+      allow(notifier).to receive(:notify_after_record).with(program)
     end
 
-    it 'tweets' do
-      expect(recorder).to receive(:tweet).with(/title #6 sub/)
+    it 'calls Notifier#notify_after_record' do
+      expect(notifier).to receive(:notify_after_record).with(program)
       recorder.after_record(program)
     end
 
