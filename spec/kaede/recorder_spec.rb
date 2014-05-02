@@ -15,7 +15,7 @@ describe Kaede::Recorder do
   let(:fname) { '5678_1234' }
   let(:formatted_fname) { '5678_1234 title #6 sub (comment) at MX' }
   let(:record_dir) { @tmpdir.join('record').tap(&:mkpath) }
-  let(:record_path) { record_dir.join("#{fname}.ts") }
+  let(:record_path) { recorder.record_path(program) }
   let(:cache_dir) { @tmpdir.join('cache').tap(&:mkpath) }
   let(:cache_path) { cache_dir.join("#{fname}.cache.ts") }
   let(:cache_ass_path) { cache_dir.join("#{fname}.raw.ass") }
@@ -47,8 +47,8 @@ describe Kaede::Recorder do
   describe '#record' do
     it 'calls before_record -> do_record -> after_record' do
       expect(recorder).to receive(:before_record).ordered.with(program)
-      expect(recorder).to receive(:do_record).ordered.with(program, instance_of(Pathname), instance_of(Fixnum))
-      expect(recorder).to receive(:after_record).ordered.with(program, instance_of(Pathname))
+      expect(recorder).to receive(:do_record).ordered.with(program, instance_of(Fixnum))
+      expect(recorder).to receive(:after_record).ordered.with(program)
 
       expect { recorder.record(db, job[:pid]) }.to output(/Start #{job[:pid]}.*Done #{job[:pid]}/m).to_stdout
     end
@@ -78,14 +78,14 @@ describe Kaede::Recorder do
 
     it 'tweets' do
       expect(recorder).to receive(:tweet).with(/title #6 sub/)
-      recorder.after_record(program, record_path)
+      recorder.after_record(program)
     end
 
     it 'cleans cached TS' do
       expect(cache_path).to be_exist
       expect(cabinet_path).to_not be_exist
 
-      recorder.after_record(program, record_path)
+      recorder.after_record(program)
 
       expect(cache_path).to_not be_exist
       expect(cabinet_path).to be_exist
@@ -95,7 +95,7 @@ describe Kaede::Recorder do
       expect(cache_ass_path).to be_exist
       expect(cabinet_ass_path).to_not be_exist
 
-      recorder.after_record(program, record_path)
+      recorder.after_record(program)
 
       expect(cache_ass_path).to_not be_exist
       expect(cabinet_ass_path).to be_exist
@@ -104,7 +104,7 @@ describe Kaede::Recorder do
     it 'enqueues to redis' do
       expect(Kaede.config.redis).to receive(:rpush).with(Kaede.config.redis_queue, formatted_fname)
 
-      recorder.after_record(program, record_path)
+      recorder.after_record(program)
     end
 
     context 'with empty ass' do
@@ -116,7 +116,7 @@ describe Kaede::Recorder do
         expect(cache_ass_path).to be_exist
         expect(cabinet_ass_path).to_not be_exist
 
-        recorder.after_record(program, record_path)
+        recorder.after_record(program)
 
         expect(cache_ass_path).to_not be_exist
         expect(cabinet_ass_path).to_not be_exist
@@ -128,21 +128,21 @@ describe Kaede::Recorder do
 
     it 'creates raw TS in record dir' do
       expect(record_path).to_not be_exist
-      recorder.do_record(program, record_path, duration)
+      recorder.do_record(program, duration)
       expect(record_path).to be_exist
       expect(record_path.read.chomp).to eq("#{program.channel_for_recorder} #{duration}")
     end
 
     it 'creates b25-decoded TS in cache dir' do
       expect(cache_path).to_not be_exist
-      recorder.do_record(program, record_path, duration)
+      recorder.do_record(program, duration)
       expect(cache_path).to be_exist
       expect(cache_path.read.chomp).to eq(record_path.read.chomp.reverse)
     end
 
     it 'creates ass in cache dir' do
       expect(cache_ass_path).to_not be_exist
-      recorder.do_record(program, record_path, duration)
+      recorder.do_record(program, duration)
       expect(cache_ass_path).to be_exist
       expect(cache_ass_path.read.chomp).to eq(record_path.read.chomp.gsub('1', '2'))
     end

@@ -15,18 +15,22 @@ module Kaede
       before_record(program)
 
       puts "Start #{pid} #{program.syoboi_url}"
-      path = Kaede.config.record_dir.join("#{program.tid}_#{program.pid}.ts")
       duration = calculate_duration(program)
-      do_record(program, path, duration)
+      do_record(program, duration)
 
       program = db.get_program(pid)
       puts "Done #{pid} #{program.syoboi_url}"
-      after_record(program, path)
+      after_record(program)
+    end
+
+    def record_path(program)
+      Kaede.config.record_dir.join("#{program.tid}_#{program.pid}.ts")
     end
 
     BUFSIZ = 188 * 16
 
-    def do_record(program, path, duration)
+    def do_record(program, duration)
+      path = record_path(program)
       path.open('w') {}
       recpt1_pid = spawn(Kaede.config.recpt1.to_s, program.channel_for_recorder.to_s, duration.to_s, path.to_s)
 
@@ -90,8 +94,8 @@ module Kaede
       tweet("#{format_title(program)}を録画する")
     end
 
-    def after_record(program, path)
-      tweet_after_record(program, path)
+    def after_record(program)
+      tweet_after_record(program)
 
       fname = program.formatted_fname
       FileUtils.mv(Kaede.config.cache_dir.join("#{program.tid}_#{program.pid}.cache.ts").to_s, Kaede.config.cache_dir.join("#{fname}.cache.ts").to_s)
@@ -113,7 +117,8 @@ module Kaede
       FileUtils.rm(Kaede.config.cache_dir.join("#{fname}.cache.ts").to_s)
     end
 
-    def tweet_after_record(program, path)
+    def tweet_after_record(program)
+      path = record_path(program)
       total, avail = `#{Kaede.config.statvfs} #{Kaede.config.record_dir}`.chomp.split(/\s/, 2).map(&:to_i)
       avail /= 1024 * 1024 * 1024
       fsize = path.size.to_f
