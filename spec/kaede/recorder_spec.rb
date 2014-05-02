@@ -67,12 +67,7 @@ describe Kaede::Recorder do
       cache_ass_path.open('w') { |f| f.puts 'ass' }
 
       allow(Kaede.config.redis).to receive(:rpush)
-      @orig_stdout = $stdout
       $stdout = open(File::NULL, 'w')
-    end
-
-    after do
-      $stdout = @orig_stdout
     end
 
     it 'tweets' do
