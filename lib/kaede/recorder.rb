@@ -1,5 +1,3 @@
-# coding: utf-8
-
 require 'date'
 require 'open3'
 require 'fileutils'
