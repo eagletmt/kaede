@@ -46,7 +46,7 @@ describe Kaede::Recorder do
   describe '#record' do
     it 'calls before_record -> do_record -> after_record' do
       expect(recorder).to receive(:before_record).ordered.with(program)
-      expect(recorder).to receive(:do_record).ordered.with(program, instance_of(Fixnum))
+      expect(recorder).to receive(:do_record).ordered.with(program)
       expect(recorder).to receive(:after_record).ordered.with(program)
 
       expect { recorder.record(db, job[:pid]) }.to output(/Start #{job[:pid]}.*Done #{job[:pid]}/m).to_stdout
@@ -124,24 +124,23 @@ describe Kaede::Recorder do
   end
 
   describe '#do_record' do
-
     it 'creates raw TS in record dir' do
       expect(record_path).to_not be_exist
-      recorder.do_record(program, duration)
+      recorder.do_record(program)
       expect(record_path).to be_exist
-      expect(record_path.read.chomp).to eq("#{program.channel_for_recorder} #{duration}")
+      expect(record_path.read.chomp).to eq("#{program.channel_for_recorder} #{duration - 10}")
     end
 
     it 'creates b25-decoded TS in cache dir' do
       expect(cache_path).to_not be_exist
-      recorder.do_record(program, duration)
+      recorder.do_record(program)
       expect(cache_path).to be_exist
       expect(cache_path.read.chomp).to eq(record_path.read.chomp.reverse)
     end
 
     it 'creates ass in cache dir' do
       expect(cache_ass_path).to_not be_exist
-      recorder.do_record(program, duration)
+      recorder.do_record(program)
       expect(cache_ass_path).to be_exist
       expect(cache_ass_path.read.chomp).to eq(record_path.read.chomp.gsub('1', '2'))
     end

@@ -15,8 +15,7 @@ module Kaede
       before_record(program)
 
       puts "Start #{pid} #{program.syoboi_url}"
-      duration = calculate_duration(program)
-      do_record(program, duration)
+      do_record(program)
 
       program = db.get_program(pid)
       puts "Done #{pid} #{program.syoboi_url}"
@@ -47,41 +46,20 @@ module Kaede
       Kaede.config.cabinet_dir.join("#{program.formatted_fname}.raw.ass")
     end
 
-    BUFSIZ = 188 * 16
+    def do_record(program)
+      spawn_recpt1(program)
+      spawn_tail(program)
+      spawn_b25(program)
+      spawn_ass(program)
+      spawn_repeater
+      wait_recpt1
+      finalize
+    end
 
-    def do_record(program, duration)
+    def spawn_recpt1(program)
       path = record_path(program)
       path.open('w') {}
-      recpt1_pid = spawn(Kaede.config.recpt1.to_s, program.channel_for_recorder.to_s, duration.to_s, path.to_s)
-
-      tail_pipe_r, tail_pipe_w = IO.pipe
-      tail_pid = spawn('tail', '-f', path.to_s, out: tail_pipe_w)
-      tail_pipe_w.close
-
-      b25_pipe_r, b25_pipe_w = IO.pipe
-      b25_pid = spawn(Kaede.config.b25.to_s, '-v0', '-s1', '-m1', '/dev/stdin', cache_path(program).to_s, in: b25_pipe_r)
-      b25_pipe_r.close
-
-      ass_pipe_r, ass_pipe_w = IO.pipe
-      ass_pid = spawn(Kaede.config.assdumper.to_s, '/dev/stdin', in: ass_pipe_r, out: cache_ass_path(program).to_s)
-      ass_pipe_r.close
-
-      multi = Thread.start do
-        while buf = tail_pipe_r.read(BUFSIZ)
-          b25_pipe_w.write(buf)
-          ass_pipe_w.write(buf)
-        end
-        tail_pipe_r.close
-        b25_pipe_w.close
-        ass_pipe_w.close
-        Process.waitpid(b25_pid)
-        Process.waitpid(ass_pid)
-      end
-
-      Process.waitpid(recpt1_pid)
-      Process.kill(:INT, tail_pid)
-      Process.waitpid(tail_pid)
-      multi.join
+      @recpt1_pid = spawn(Kaede.config.recpt1.to_s, program.channel_for_recorder.to_s, calculate_duration(program).to_s, path.to_s)
     end
 
     def calculate_duration(program)
@@ -95,6 +73,50 @@ module Kaede
         duration += 25
       end
       duration
+    end
+
+    def spawn_tail(program)
+      @tail_pipe_r, @tail_pipe_w = IO.pipe
+      @tail_pid = spawn('tail', '-f', record_path(program).to_s, out: @tail_pipe_w)
+      @tail_pipe_w.close
+    end
+
+    def spawn_b25(program)
+      @b25_pipe_r, @b25_pipe_w = IO.pipe
+      @b25_pid = spawn(Kaede.config.b25.to_s, '-v0', '-s1', '-m1', '/dev/stdin', cache_path(program).to_s, in: @b25_pipe_r)
+      @b25_pipe_r.close
+    end
+
+    def spawn_ass(program)
+      @ass_pipe_r, @ass_pipe_w = IO.pipe
+      @ass_pid = spawn(Kaede.config.assdumper.to_s, '/dev/stdin', in: @ass_pipe_r, out: cache_ass_path(program).to_s)
+      @ass_pipe_r.close
+    end
+
+    BUFSIZ = 188 * 16
+
+    def spawn_repeater
+      @repeater_thread = Thread.start do
+        while buf = @tail_pipe_r.read(BUFSIZ)
+          @b25_pipe_w.write(buf)
+          @ass_pipe_w.write(buf)
+        end
+        @tail_pipe_r.close
+        @b25_pipe_w.close
+        @ass_pipe_w.close
+      end
+    end
+
+    def wait_recpt1
+      Process.waitpid(@recpt1_pid)
+    end
+
+    def finalize
+      Process.kill(:INT, @tail_pid)
+      Process.waitpid(@tail_pid)
+      @repeater_thread.join
+      Process.waitpid(@b25_pid)
+      Process.waitpid(@ass_pid)
     end
 
     def tweet(text)
