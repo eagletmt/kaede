@@ -52,6 +52,16 @@ describe Kaede::Recorder do
 
       expect { recorder.record(db, job[:pid]) }.to output(/Start #{job[:pid]}.*Done #{job[:pid]}/m).to_stdout
     end
+
+    it 'notifies exception' do
+      e = Class.new(Exception)
+      expect(notifier).to receive(:notify_exception).with(e, program)
+      allow(recorder).to receive(:before_record)
+      allow(recorder).to receive(:do_record).and_raise(e)
+      allow(recorder).to receive(:after_record)
+
+      expect { recorder.record(db, job[:pid]) }.to raise_error(e)
+    end
   end
 
   describe '#after_record' do

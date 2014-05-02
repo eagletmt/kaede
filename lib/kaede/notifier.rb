@@ -5,6 +5,7 @@ module Kaede
   class Notifier
     def initialize
       @twitter = Kaede.config.twitter
+      @twitter_target = Kaede.config.twitter_target
     end
 
     def notify_before_record(program)
@@ -20,6 +21,14 @@ module Kaede
           available_disk,
         )
       )
+    end
+
+    def notify_exception(exception, program)
+      msg = "#{program.title}(PID #{program.pid}) の録画中に #{exception.class} で失敗した……"
+      if @twitter_target
+        msg = "@#{@twitter_target} #{msg}"
+      end
+      tweet(msg)
     end
 
     def format_title(program)

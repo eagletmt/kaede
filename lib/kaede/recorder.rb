@@ -18,6 +18,9 @@ module Kaede
       program = db.get_program(pid)
       puts "Done #{pid} #{program.syoboi_url}"
       after_record(program)
+    rescue Exception => e
+      @notifier.notify_exception(e, program)
+      raise e
     end
 
     def record_path(program)

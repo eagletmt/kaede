@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'spec_helper'
 
 require 'kaede/notifier'
@@ -29,6 +30,31 @@ describe Kaede::Notifier do
     it 'tweets' do
       expect(notifier).to receive(:tweet).with(/title #6 sub.*0\.00GB/)
       notifier.notify_after_record(program)
+    end
+  end
+
+  describe '#notify_exception' do
+    class MyException < Exception
+    end
+
+    it 'tweets' do
+      Kaede.configure do |config|
+        config.twitter_target = nil
+      end
+
+      expect(notifier).to receive(:tweet).with(/MyException で失敗した/)
+      notifier.notify_exception(MyException.new, program)
+    end
+
+    context 'when twitter_target is set' do
+      it 'tweets to twitter_target' do
+        Kaede.configure do |config|
+          config.twitter_target = 'eagletmt'
+        end
+
+        expect(notifier).to receive(:tweet).with(/\A@eagletmt .* MyException で失敗した/)
+        notifier.notify_exception(MyException.new, program)
+      end
     end
   end
 end
