@@ -17,6 +17,7 @@ module Kaede
       $stderr.sync = true
       @recorder_queue = Queue.new
       @recorder_waiter = start_recorder_waiter
+      $0 = 'kaede-scheduler'
       puts "Start #{Process.pid}"
     end
 
@@ -86,7 +87,7 @@ module Kaede
             throw :reload
           when @stop_event
             io.value
-            $0 = "kaede (old #{Time.now.strftime('%F %X')})"
+            $0 = "kaede-scheduler (old #{Time.now.strftime('%F %X')})"
             throw :stop
           else
             abort "Unknown IO: #{io.inspect}"
