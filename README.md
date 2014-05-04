@@ -82,6 +82,12 @@ Reload schedules (usually not needed).
 dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Reload
 ```
 
+Restart scheduler. The current scheduler process exits after all the running recorders finish.
+
+```sh
+dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Restart
+```
+
 ## What recorder does
 1. Post the earlier tweet (optional).
 2. Record the program into `record_dir` by recpt1.

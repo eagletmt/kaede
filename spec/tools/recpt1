@@ -1,2 +1,5 @@
 #!/bin/sh
 echo $1 $2 > "$3"
+echo "Recording..."
+sleep 30
+echo "Done"

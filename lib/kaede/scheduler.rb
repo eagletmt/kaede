@@ -15,27 +15,46 @@ module Kaede
       setup_signals
       $stdout.sync = true
       $stderr.sync = true
+      @recorder_queue = Queue.new
+      @recorder_waiter = start_recorder_waiter
       puts "Start #{Process.pid}"
     end
 
+    POISON = Object.new
+
     def setup_signals
       @reload_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
+      @restart_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
 
       @stop_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
       trap(:INT) { @stop_event.incr(1) }
     end
 
+    def start_recorder_waiter
+      Thread.start do
+        loop do
+          recorder_thread = @recorder_queue.deq
+          break if recorder_thread.equal?(POISON)
+          recorder_thread.join
+        end
+      end
+    end
+
     def start
-      catch(:stop) do
+      is_graceful = catch(:stop) do
         loop do
           start_epoll
         end
+      end
+      if is_graceful
+        graceful_restart!
       end
     end
 
     def start_epoll
       epoll = SleepyPenguin::Epoll.new
       epoll.add(@reload_event, [:IN])
+      epoll.add(@restart_event, [:IN])
       epoll.add(@stop_event, [:IN])
 
       @timerfds = {}
@@ -63,10 +82,14 @@ module Kaede
           when SleepyPenguin::TimerFD
             io.expirations
             _, pid = @timerfds.delete(io.fileno)
-            spawn_recorder(pid)
+            thread = spawn_recorder(pid)
+            @recorder_queue.enq(thread)
           when @reload_event
             io.value
             throw :reload
+          when @restart_event
+            io.value
+            throw :stop, true
           when @stop_event
             io.value
             throw :stop
@@ -98,7 +121,7 @@ module Kaede
         end
       end
 
-      service.export(DBus::Scheduler.new(@reload_event))
+      service.export(DBus::Scheduler.new(@reload_event, @restart_event))
 
       @dbus_main = ::DBus::Main.new
       @dbus_main << bus
@@ -139,6 +162,12 @@ module Kaede
           end
         end
       end
+    end
+
+    def graceful_restart!
+      spawn(*([$0] + ARGV))
+      @recorder_queue.enq(POISON)
+      @recorder_waiter.join
     end
   end
 end
