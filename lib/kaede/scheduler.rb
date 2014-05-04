@@ -24,7 +24,6 @@ module Kaede
 
     def setup_signals
       @reload_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
-      @restart_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
 
       @stop_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
       trap(:INT) { @stop_event.incr(1) }
@@ -41,20 +40,18 @@ module Kaede
     end
 
     def start
-      is_graceful = catch(:stop) do
+      catch(:stop) do
         loop do
           start_epoll
         end
       end
-      if is_graceful
-        graceful_restart!
-      end
+      @recorder_queue.enq(POISON)
+      @recorder_waiter.join
     end
 
     def start_epoll
       epoll = SleepyPenguin::Epoll.new
       epoll.add(@reload_event, [:IN])
-      epoll.add(@restart_event, [:IN])
       epoll.add(@stop_event, [:IN])
 
       @timerfds = {}
@@ -87,11 +84,9 @@ module Kaede
           when @reload_event
             io.value
             throw :reload
-          when @restart_event
-            io.value
-            throw :stop, true
           when @stop_event
             io.value
+            $0 = "kaede (old #{Time.now.strftime('%F %X')})"
             throw :stop
           else
             abort "Unknown IO: #{io.inspect}"
@@ -121,7 +116,7 @@ module Kaede
         end
       end
 
-      service.export(DBus::Scheduler.new(@reload_event, @restart_event))
+      service.export(DBus::Scheduler.new(@reload_event, @stop_event))
 
       @dbus_main = ::DBus::Main.new
       @dbus_main << bus
@@ -162,12 +157,6 @@ module Kaede
           end
         end
       end
-    end
-
-    def graceful_restart!
-      spawn(*([$0] + ARGV))
-      @recorder_queue.enq(POISON)
-      @recorder_waiter.join
     end
   end
 end

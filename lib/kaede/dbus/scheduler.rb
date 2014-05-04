@@ -6,10 +6,10 @@ module Kaede
       PATH = '/cc/wanko/kaede1/scheduler'
       SCHEDULER_INTERFACE = 'cc.wanko.kaede1.Scheduler'
 
-      def initialize(reload_event, restart_event)
+      def initialize(reload_event, stop_event)
         super(PATH)
         @reload_event = reload_event
-        @restart_event = restart_event
+        @stop_event = stop_event
       end
 
       dbus_interface SCHEDULER_INTERFACE do
@@ -18,8 +18,8 @@ module Kaede
           nil
         end
 
-        dbus_method :Restart do
-          @restart_event.incr(1)
+        dbus_method :Stop do
+          @stop_event.incr(1)
           nil
         end
       end
