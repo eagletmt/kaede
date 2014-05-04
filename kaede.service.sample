@@ -6,7 +6,7 @@ WorkingDirectory=/home/eagletmt/work/kaede
 User=eagletmt
 ExecStart=/usr/bin/bundle exec bin/kaede scheduler -c kaede.rb
 ExecReload=/usr/bin/kill -HUP $MAINPID
-ExecStop=/usr/bin/dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Stop
+ExecStop=/usr/bin/dbus-send --print-reply --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Stop
 Restart=always
 KillMode=none
 StandardOutput=journal
