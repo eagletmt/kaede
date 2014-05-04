@@ -26,7 +26,7 @@ module Kaede
       @reload_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
 
       @stop_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
-      trap(:INT) { @stop_event.incr(1) }
+      trap(:QUIT) { @stop_event.incr(1) }
     end
 
     def start_recorder_waiter
