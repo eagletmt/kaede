@@ -82,10 +82,10 @@ Reload schedules (usually not needed).
 dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Reload
 ```
 
-Restart scheduler. The current scheduler process exits after all the running recorders finish.
+Stop scheduler. The current scheduler process exits after all the running recorders finish.
 
 ```sh
-dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Restart
+dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Stop
 ```
 
 ## What recorder does
