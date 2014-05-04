@@ -122,7 +122,18 @@ module Kaede
       @dbus_main = ::DBus::Main.new
       @dbus_main << bus
       @dbus_thread = Thread.start do
-        @dbus_main.run
+        max_retries = 10
+        retries = 0
+        begin
+          @dbus_main.run
+        rescue ::DBus::Connection::NameRequestError => e
+          puts "#{e.class}: #{e.message}"
+          if retries < max_retries
+            retries += 1
+            sleep 1
+            retry
+          end
+        end
       end
     end
 
