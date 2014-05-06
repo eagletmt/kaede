@@ -1,6 +1,7 @@
 require 'dbus'
 require 'nokogiri'
 require 'time'
+require 'kaede/dbus/properties'
 
 module Kaede
   module DBus
@@ -16,6 +17,10 @@ module Kaede
         @enqueued_at = enqueued_at
       end
 
+      include Properties
+      properties_for PROGRAM_INTERFACE, :properties
+      define_properties
+
       def to_xml
         Nokogiri::XML::Builder.new do |xml|
           xml.doc.create_internal_subset(
@@ -30,62 +35,9 @@ module Kaede
               end
             end
 
-            xml.interface(name: PROPERTY_INTERFACE) do
-              xml.method_(name: 'Get') do
-                xml.arg(name: 'interface', direction: 'in', type: 's')
-                xml.arg(name: 'property', direction: 'in', type: 's')
-                xml.arg(name: 'value', direction: 'out', type: 'v')
-              end
-
-              xml.method_(name: 'GetAll') do
-                xml.arg(name: 'interface', direction: 'in', type: 's')
-                xml.arg(name: 'properties', direction: 'out', type: 'a{sv}')
-              end
-
-              xml.method_(name: 'Set') do
-                xml.arg(name: 'interface', direction: 'in', type: 's')
-                xml.arg(name: 'property', direction: 'in', type: 's')
-                xml.arg(name: 'value', direction: 'in', type: 'v')
-              end
-            end
-
-            xml.interface(name: PROGRAM_INTERFACE) do
-              properties.each_key do |key|
-                xml.property(name: key, type: 's', access: 'read')
-              end
-            end
+            xml_for_properties(xml)
           end
         end.to_xml
-      end
-
-      dbus_interface PROPERTY_INTERFACE do
-        dbus_method :Get, 'in interface:s, in property:s, out value:v' do |iface, prop|
-          case iface
-          when PROGRAM_INTERFACE
-            if properties.has_key?(prop)
-              [properties[prop]]
-            else
-              raise_unknown_property!
-            end
-          else
-            raise_unknown_property!
-          end
-        end
-
-        dbus_method :GetAll, 'in interface:s, out properties:a{sv}' do |iface|
-          case iface
-          when PROGRAM_INTERFACE
-            [properties]
-          when PROGRAM_INTERFACE
-            [{}]
-          else
-            unknown_interface!
-          end
-        end
-
-        dbus_method :Set, 'in interface:s, in property:s, in value:v' do |iface, prop, val|
-          raise_access_denied!
-        end
       end
 
       dbus_interface PROGRAM_INTERFACE do
@@ -107,18 +59,6 @@ module Kaede
           'Comment' => @program.comment,
           'EnqueuedAt' => @enqueued_at.iso8601,
         }
-      end
-
-      def raise_unknown_interface!
-        raise ::DBus.error('org.freedesktop.DBus.Error.UnknownInterface')
-      end
-
-      def raise_unknown_property!
-        raise ::DBus.error('org.freedesktop.DBus.Error.UnknownProperty')
-      end
-
-      def raise_access_denied!
-        raise ::DBus.error('org.freedesktop.DBus.Error.AccessDenied')
       end
     end
   end
