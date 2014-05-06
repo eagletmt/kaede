@@ -51,18 +51,29 @@ module Kaede
       @recorder_waiter.join
     end
 
-    def start_epoll
-      epoll = SleepyPenguin::Epoll.new
-      epoll.add(@reload_event, [:IN])
-      epoll.add(@stop_event, [:IN])
-
+    def prepare_timerfds
       @timerfds = {}
       @db.get_jobs.each do |job|
         tfd = SleepyPenguin::TimerFD.new(:REALTIME)
         tfd.settime(:ABSTIME, 0, job[:enqueued_at].to_i)
-        epoll.add(tfd, [:IN])
         @timerfds[tfd.fileno] = [tfd, job[:pid]]
       end
+      @timerfds
+    end
+
+    def prepare_epoll
+      prepare_timerfds
+      SleepyPenguin::Epoll.new.tap do |epoll|
+        epoll.add(@reload_event, [:IN])
+        epoll.add(@stop_event, [:IN])
+        @timerfds.each_value do |tfd, _|
+          epoll.add(tfd, [:IN])
+        end
+      end
+    end
+
+    def start_epoll
+      epoll = prepare_epoll
       puts "Loaded #{@timerfds.size} schedules"
       start_dbus
 
@@ -100,7 +111,13 @@ module Kaede
     def start_dbus
       bus = ::DBus.system_bus
       service = bus.request_service(DBus::DESTINATION)
+      dbus_export_programs(service)
+      service.export(DBus::Scheduler.new(@reload_event, @stop_event))
 
+      @dbus_thread = start_dbus_loop(bus)
+    end
+
+    def dbus_export_programs(service)
       programs = @db.get_programs(@timerfds.values.map { |_, pid| pid })
       @timerfds.each_value do |tfd, pid|
         _, value = tfd.gettime
@@ -117,12 +134,12 @@ module Kaede
           end
         end
       end
+    end
 
-      service.export(DBus::Scheduler.new(@reload_event, @stop_event))
-
+    def start_dbus_loop(bus)
       @dbus_main = DBus::Main.new
       @dbus_main << bus
-      @dbus_thread = Thread.start do
+      Thread.start do
         max_retries = 10
         retries = 0
         begin
