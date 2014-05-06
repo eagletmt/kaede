@@ -35,22 +35,20 @@ module Kaede
 
       def xml_for_dbus_properties(xml)
         xml.interface(name: PROPERTY_INTERFACE) do
-          xml.method_(name: 'Get') do
-            xml.arg(name: 'interface', direction: 'in', type: 's')
-            xml.arg(name: 'property', direction: 'in', type: 's')
-            xml.arg(name: 'value', direction: 'out', type: 'v')
-          end
-
           xml.method_(name: 'GetAll') do
             xml.arg(name: 'interface', direction: 'in', type: 's')
             xml.arg(name: 'properties', direction: 'out', type: 'a{sv}')
           end
 
-          xml.method_(name: 'Set') do
-            xml.arg(name: 'interface', direction: 'in', type: 's')
-            xml.arg(name: 'property', direction: 'in', type: 's')
-            xml.arg(name: 'value', direction: 'in', type: 'v')
+          helper = lambda do |verb, dir|
+            xml.method_(name: verb) do
+              xml.arg(name: 'interface', direction: 'in', type: 's')
+              xml.arg(name: 'property', direction: 'in', type: 's')
+              xml.arg(name: 'value', direction: dir, type: 'v')
+            end
           end
+          helper.call('Get', 'out')
+          helper.call('Set', 'in')
         end
       end
 
