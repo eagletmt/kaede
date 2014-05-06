@@ -19,24 +19,11 @@ module Kaede
         def define_properties
           dbus_interface PROPERTY_INTERFACE do
             dbus_method :Get, 'in interface:s, in property:s, out value:v' do |iface, prop|
-              if self.class.properties_method.has_key?(iface)
-                props = send(self.class.properties_method[iface])
-                if props.has_key?(prop)
-                  [props[prop]]
-                else
-                  raise_unknown_property!
-                end
-              else
-                raise_unknown_interface!
-              end
+              get_property(iface, prop)
             end
 
             dbus_method :GetAll, 'in interface:s, out properties:a{sv}' do |iface|
-              if self.class.properties_method.has_key?(iface)
-                [send(self.class.properties_method[iface])]
-              else
-                unknown_interface!
-              end
+              get_properties(iface)
             end
 
             dbus_method :Set, 'in interface:s, in property:s, in value:v' do |iface, prop, val|
@@ -75,6 +62,23 @@ module Kaede
               xml.property(name: key, type: 's', access: 'read')
             end
           end
+        end
+      end
+
+      def get_property(iface, prop)
+        props = get_properties(iface).first
+        if props.has_key?(prop)
+          [props[prop]]
+        else
+          raise_unknown_property!
+        end
+      end
+
+      def get_properties(iface)
+        if sym = self.class.properties_method[iface]
+          [send(sym)]
+        else
+          unknown_interface!
         end
       end
 
