@@ -1,4 +1,5 @@
 # Kaede
+[![Gem Version](https://badge.fury.io/rb/kaede.svg)](http://badge.fury.io/rb/kaede)
 [![Build Status](https://api.travis-ci.org/eagletmt/kaede.svg)](https://travis-ci.org/eagletmt/kaede)
 [![Coverage Status](https://coveralls.io/repos/eagletmt/kaede/badge.png)](https://coveralls.io/r/eagletmt/kaede)
 [![Code Climate](https://codeclimate.com/github/eagletmt/kaede.png)](https://codeclimate.com/github/eagletmt/kaede)
