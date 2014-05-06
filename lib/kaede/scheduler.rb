@@ -2,6 +2,7 @@ require 'dbus'
 require 'thread'
 require 'sleepy_penguin'
 require 'kaede/dbus'
+require 'kaede/dbus/main'
 require 'kaede/dbus/program'
 require 'kaede/dbus/scheduler'
 require 'kaede/notifier'
@@ -119,13 +120,13 @@ module Kaede
 
       service.export(DBus::Scheduler.new(@reload_event, @stop_event))
 
-      @dbus_main = ::DBus::Main.new
+      @dbus_main = DBus::Main.new
       @dbus_main << bus
       @dbus_thread = Thread.start do
         max_retries = 10
         retries = 0
         begin
-          @dbus_main.run
+          @dbus_main.loop
         rescue ::DBus::Connection::NameRequestError => e
           puts "#{e.class}: #{e.message}"
           if retries < max_retries
