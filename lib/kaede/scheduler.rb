@@ -13,7 +13,7 @@ module Kaede
 
     def setup(db)
       @db = db
-      setup_signals
+      prepare_events
       $stdout.sync = true
       $stderr.sync = true
       @recorder_queue = Queue.new
@@ -24,11 +24,9 @@ module Kaede
 
     POISON = Object.new
 
-    def setup_signals
+    def prepare_events
       @reload_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
-
       @stop_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
-      trap(:QUIT) { @stop_event.incr(1) }
     end
 
     def start_recorder_waiter
