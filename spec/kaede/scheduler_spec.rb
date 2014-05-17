@@ -6,6 +6,7 @@ require 'kaede'
 require 'kaede/database'
 require 'kaede/recorder'
 require 'kaede/scheduler'
+require 'kaede/dbus'
 
 describe Kaede::Scheduler do
   let(:db_file) { Tempfile.open('kaede.db') }
@@ -22,32 +23,23 @@ describe Kaede::Scheduler do
     end
 
     it 'works' do
-      r, w = IO.pipe
+      q = Queue.new
       allow_any_instance_of(Kaede::Recorder).to receive(:record) { |recorder, db, pid|
-        program = db.get_program(pid)
-        puts "Record #{program.pid}"
+        q.push(pid)
       }
-      pid = fork do
-        r.close
-        $stdout.reopen(w)
-        described_class.setup(db)
+      described_class.setup(db)
+      expect(db.get_jobs.size).to eq(1)
+      thread = Thread.start do
         described_class.start
       end
-      w.close
 
-      expect(db.get_jobs.size).to eq(1)
       begin
         Timeout.timeout(10) do
-          while s = r.gets.chomp
-            if s =~ /\ARecord (\d+)\z/
-              expect($1.to_i).to eq(program.pid)
-              break
-            end
-          end
+          expect(q.pop).to eq(program.pid)
         end
       ensure
-        Process.kill(:QUIT, pid)
-        Process.waitpid(pid)
+        described_class.fire_stop
+        thread.join
       end
       expect(db.get_jobs.size).to eq(0)
     end

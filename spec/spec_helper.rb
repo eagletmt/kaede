@@ -12,9 +12,6 @@ SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
 SimpleCov.start do
   add_filter Bundler.bundle_path.to_s
   add_filter File.dirname(__FILE__)
-
-  # Kaede::Scheduler is tested in another process.
-  add_filter 'lib/kaede/scheduler.rb'
 end
 
 VCR.configure do |config|

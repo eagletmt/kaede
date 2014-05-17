@@ -29,6 +29,10 @@ module Kaede
       @stop_event = SleepyPenguin::EventFD.new(0, :SEMAPHORE)
     end
 
+    def fire_stop
+      @stop_event.incr(1)
+    end
+
     def start_recorder_waiter
       Thread.start do
         loop do
