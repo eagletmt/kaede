@@ -31,6 +31,14 @@ module Kaede
       tweet(msg)
     end
 
+    def notify_duration_error(program, got_duration)
+      msg = sprintf('%sの長さが%g秒しか無いようだが……', format_title(program), got_duration)
+      if @twitter_target
+        msg = "@#{@twitter_target} #{msg}"
+      end
+      tweet(msg)
+    end
+
     def format_title(program)
       buf = "#{program.channel_name}で「#{program.title}"
       if program.count

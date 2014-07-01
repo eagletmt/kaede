@@ -1,6 +1,7 @@
 require 'date'
-require 'open3'
 require 'fileutils'
+require 'json'
+require 'open3'
 
 module Kaede
   class Recorder
@@ -124,6 +125,7 @@ module Kaede
       @notifier.notify_after_record(program)
       move_ass_to_cabinet(program)
       clean_ts(program)
+      verify_duration(program, cache_path(program)) && verify_duration(program, cabinet_path(program))
       enqueue_to_redis(program)
       FileUtils.rm(cache_path(program).to_s)
     end
@@ -145,6 +147,32 @@ module Kaede
 
     def enqueue_to_redis(program)
       Kaede.config.redis.rpush(Kaede.config.redis_queue, program.formatted_fname)
+    end
+
+    ALLOWED_DURATION_ERROR = 20
+
+    def verify_duration(program, path)
+      expected_duration = calculate_duration(program)
+      json = ffprobe(path)
+      got_duration = json['duration'].to_f
+      if (got_duration - expected_duration).abs < ALLOWED_DURATION_ERROR
+        true
+      else
+        @notifier.notify_duration_error(program, got_duration)
+        false
+      end
+    end
+
+    class FFprobeError < StandardError
+    end
+
+    def ffprobe(path)
+      outbuf, errbuf, status = Open3.capture3('ffprobe', '-show_format', '-print_format', 'json', path.to_s)
+      if status.success?
+        JSON.parse(outbuf)['format']
+      else
+        raise FFprobeError.new("ffprobe exited with #{status.exitstatus}: #{errbuf}")
+      end
     end
   end
 end
