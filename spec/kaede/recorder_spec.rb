@@ -30,6 +30,8 @@ describe Kaede::Recorder do
     db.update_program(program, channel)
     db.update_job(program.pid, Time.now + 5)
 
+    allow(recorder).to receive(:verify_duration)
+
     Kaede.configure do |config|
       config.redis = double('redis')
       tools = @topdir.join('tools')
@@ -170,6 +172,32 @@ describe Kaede::Recorder do
 
       it 'has 30min duration even if Syoboi Calendar says 27min' do
         is_expected.to eq(30*60 - 10)
+      end
+    end
+  end
+
+  describe '#verify_duration' do
+    let(:duration) { 1800 }
+    let(:got_duration) { 1789.21 }
+
+    before do
+      # Unstub verify_duration
+      allow(recorder).to receive(:verify_duration).and_call_original
+
+      allow(recorder).to receive(:ffprobe).and_return('duration' => got_duration)
+    end
+
+    it 'verifies the duration of recorded MPEG2-TS' do
+      expect(recorder.verify_duration(program, double('path to MPEG2-TS'))).to eq(true)
+    end
+
+    context 'when the duration is too short' do
+      let(:got_duration) { 1750.45 }
+
+      it 'notifies the verification error' do
+        expect(notifier).to receive(:notify_duration_error)
+
+        expect(recorder.verify_duration(program, double('path to MPEG2-TS'))).to eq(false)
       end
     end
   end
