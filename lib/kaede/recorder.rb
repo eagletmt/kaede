@@ -91,7 +91,7 @@ module Kaede
       @ass_pipe_r.close
     end
 
-    BUFSIZ = 188 * 16
+    BUFSIZ = 188 * 1024
 
     def spawn_repeater
       @repeater_thread = Thread.start do
