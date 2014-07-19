@@ -32,7 +32,15 @@ module Kaede
     end
 
     def notify_duration_error(program, got_duration)
-      msg = sprintf('%sの長さが%g秒しか無いようだが……', format_title(program), got_duration)
+      msg = sprintf('%s (PID:%d) の長さが%g秒しか無いようだが……', format_title(program), program.pid, got_duration)
+      if @twitter_target
+        msg = "@#{@twitter_target} #{msg}"
+      end
+      tweet(msg)
+    end
+
+    def notify_redo_error(program)
+      msg = "再実行にも失敗した…… (PID:#{program.pid})"
       if @twitter_target
         msg = "@#{@twitter_target} #{msg}"
       end

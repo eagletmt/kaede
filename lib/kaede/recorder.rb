@@ -123,9 +123,11 @@ module Kaede
 
     def after_record(program)
       @notifier.notify_after_record(program)
+      unless verify_duration(program, cache_path(program))
+        redo_ts_process(program)
+      end
       move_ass_to_cabinet(program)
       clean_ts(program)
-      verify_duration(program, cache_path(program)) && verify_duration(program, cabinet_path(program))
       enqueue_to_redis(program)
       FileUtils.rm(cache_path(program).to_s)
     end
@@ -143,6 +145,18 @@ module Kaede
       unless system(Kaede.config.clean_ts.to_s, cache_path(program).to_s, cabinet_path(program).to_s)
         raise "clean-ts failure: #{program.formatted_fname}"
       end
+    end
+
+    def redo_ts_process(program)
+      unless system(Kaede.config.b25.to_s, '-v0', '-s1', '-m1', record_path(program).to_s, cache_path(program).to_s)
+        @notifier.notify_redo_error(program)
+        return false
+      end
+      unless system(Kaede.config.assdumper.to_s, record_path(program).to_s, out: cache_ass_path(program).to_s)
+        @notifier.notify_redo_error(program)
+        return false
+      end
+      true
     end
 
     def enqueue_to_redis(program)
