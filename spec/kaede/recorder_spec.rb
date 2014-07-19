@@ -74,6 +74,7 @@ describe Kaede::Recorder do
 
       allow(Kaede.config.redis).to receive(:rpush)
       allow(notifier).to receive(:notify_after_record).with(program)
+      allow(recorder).to receive(:verify_duration).and_return(true)
     end
 
     it 'calls Notifier#notify_after_record' do
