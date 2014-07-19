@@ -156,6 +156,10 @@ module Kaede
         @notifier.notify_redo_error(program)
         return false
       end
+      unless verify_duration(program, cache_path(program))
+        @notifier.notify_redo_error(program)
+        return false
+      end
       true
     end
 
