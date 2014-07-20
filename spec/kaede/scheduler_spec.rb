@@ -10,7 +10,7 @@ require 'kaede/dbus'
 
 describe Kaede::Scheduler do
   let(:db_file) { Tempfile.open('kaede.db') }
-  let(:db) { Kaede::Database.new(db_file.path) }
+  let(:db) { Kaede::Database.new("sqlite://#{db_file.path}") }
 
   describe '.start' do
     let(:program) { Kaede::Program.new(1234, 5678, Time.now, Time.now + 30, nil, 19, 9, '5.5', 0, 'sub', 'title', '') }

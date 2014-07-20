@@ -5,7 +5,7 @@ require 'kaede/syoboi_calendar'
 require 'kaede/updater'
 
 describe Kaede::Updater do
-  let(:db) { Kaede::Database.new(':memory:') }
+  let(:db) { Kaede::Database.new('sqlite:/') }
   let(:syobocal) { Kaede::SyoboiCalendar.new }
   let(:updater) { described_class.new(db, syobocal) }
 

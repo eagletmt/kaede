@@ -45,33 +45,22 @@ module Kaede
     end
     private :prepare_tables
 
-    DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-
-    def to_db_datetime(time)
-      time.utc.strftime(DATETIME_FORMAT)
-    end
-
-    def from_db_datetime(str)
-      Time.parse("#{str} UTC").localtime
-    end
-
-    def current_timestamp
-      to_db_datetime(Time.now)
-    end
-    private :current_timestamp
-
     def get_jobs
-      @db.execute('SELECT pid, enqueued_at FROM jobs WHERE finished_at IS NULL AND enqueued_at >= ? ORDER BY enqueued_at', [current_timestamp]).map do |pid, enqueued_at|
-        { pid: pid, enqueued_at: from_db_datetime(enqueued_at) }
-      end
+      @db.from(:jobs).select(:pid, :enqueued_at).where(finished_at: nil).where(Sequel.qualify(:jobs, :enqueued_at) >= Time.now).order(:enqueued_at).to_a
     end
 
     def update_job(pid, enqueued_at)
-      @db.execute('INSERT OR REPLACE INTO jobs (pid, enqueued_at, created_at) VALUES (?, ?, ?)', [pid, to_db_datetime(enqueued_at), current_timestamp])
+      @db.transaction do
+        begin
+          @db.from(:jobs).insert(pid: pid, enqueued_at: enqueued_at, created_at: Time.now)
+        rescue Sequel::UniqueConstraintViolation
+          @db.from(:jobs).where(pid: pid).update(enqueued_at: enqueued_at)
+        end
+      end
     end
 
     def delete_job(pid)
-      @db.execute('DELETE FROM jobs WHERE pid = ?', pid)
+      @db.from(:jobs).where(pid: pid).delete
     end
 
     def get_program(pid)
@@ -79,62 +68,69 @@ module Kaede
     end
 
     def get_programs(pids)
-      rows = @db.execute(<<-SQL)
-SELECT pid, tid, start_time, end_time, channels.name, for_syoboi, for_recorder, count, start_offset, subtitle, title, comment
-FROM programs
-INNER JOIN channels ON programs.channel_id = channels.id
-WHERE programs.pid IN (#{pids.join(', ')})
-      SQL
       programs = {}
-      rows.each do |row|
-        program = Program.new(*row)
-        program.start_time = from_db_datetime(program.start_time)
-        program.end_time = from_db_datetime(program.end_time)
+      @db.from(:programs).inner_join(:channels, [[channel_id: :id]]).where(pid: pids).each do |row|
+        program = Program.new(
+          row[:pid],
+          row[:tid],
+          row[:start_time],
+          row[:end_time],
+          row[:name],
+          row[:for_syoboi],
+          row[:for_recorder],
+          row[:count],
+          row[:start_offset],
+          row[:subtitle],
+          row[:title],
+          row[:comment],
+        )
         programs[program.pid] = program
       end
       programs
     end
 
     def mark_finished(pid)
-      @db.execute('UPDATE jobs SET finished_at = ? WHERE pid = ?', [current_timestamp, pid])
+      @db.from(:jobs).where(pid: pid).update(finished_at: Time.now)
     end
 
     def get_channels
-      @db.execute('SELECT * FROM channels').map do |row|
-        Channel.new(*row)
+      @db.from(:channels).map do |row|
+        Channel.new(row[:id], row[:name], row[:for_recorder], row[:for_syoboi])
       end
     end
 
     def add_channel(channel)
-      @db.execute('INSERT INTO channels (name, for_recorder, for_syoboi) VALUES (?, ?, ?)', [channel.name, channel.for_recorder, channel.for_syoboi])
+      @db.from(:channels).insert(name: channel.name, for_recorder: channel.for_recorder, for_syoboi: channel.for_syoboi)
     end
 
     def update_program(program, channel)
-      row = [
-        program.pid,
-        program.tid,
-        to_db_datetime(program.start_time),
-        to_db_datetime(program.end_time),
-        channel.id,
-        program.count,
-        program.start_offset,
-        program.subtitle,
-        program.title,
-        program.comment,
-      ]
-      @db.execute(<<-SQL, row)
-INSERT INTO programs (pid, tid, start_time, end_time, channel_id, count, start_offset, subtitle, title, comment)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      SQL
+      attributes = {
+        tid: program.tid,
+        start_time: program.start_time,
+        end_time: program.end_time,
+        channel_id: channel.id,
+        count: program.count,
+        start_offset: program.start_offset,
+        subtitle: program.subtitle,
+        title: program.title,
+        comment: program.comment,
+      }
+      @db.transaction do
+        begin
+          @db.from(:programs).insert(attributes.merge(pid: program.pid))
+        rescue Sequel::UniqueConstraintViolation
+          @db.from(:programs).where(pid: program.pid).update(attributes)
+        end
+      end
     end
 
     def add_tracking_title(tid)
-      @db.execute('INSERT INTO tracking_titles (tid, created_at) VALUES (?, ?)', [tid, current_timestamp])
+      @db.from(:tracking_titles).insert(tid: tid, created_at: Time.now)
     end
 
     def get_tracking_titles
-      @db.execute('SELECT tid FROM tracking_titles').map do |row|
-        row[0]
+      @db.from(:tracking_titles).select(:tid).map do |row|
+        row[:tid]
       end
     end
   end
