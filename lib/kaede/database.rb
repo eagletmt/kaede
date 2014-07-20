@@ -14,38 +14,34 @@ module Kaede
     end
 
     def prepare_tables
-      @db.execute_batch <<-SQL
-CREATE TABLE IF NOT EXISTS channels (
-  id integer PRIMARY KEY AUTOINCREMENT,
-  name varchar(255) NOT NULL UNIQUE,
-  for_recorder integer NOT NULL UNIQUE,
-  for_syoboi integer NOT NULL UNIQUE
-);
-CREATE TABLE IF NOT EXISTS programs (
-  pid integer PRIMARY KEY ON CONFLICT REPLACE,
-  tid integer NOT NULL,
-  start_time datetime NOT NULL,
-  end_time datetime NOT NULL,
-  channel_id integer NOT NULL,
-  count varchar(16),
-  start_offset integer NOT NULL,
-  subtitle varchar(255),
-  title varchar(255),
-  comment varchar(255),
-  FOREIGN KEY(channel_id) REFERENCES channels(id)
-);
-CREATE TABLE IF NOT EXISTS jobs (
-  pid integer PRIMARY KEY,
-  enqueued_at datetime NOT NULL,
-  finished_at datetime,
-  created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(pid) REFERENCES programs(pid)
-);
-CREATE TABLE IF NOT EXISTS tracking_titles (
-  tid integer NOT NULL UNIQUE,
-  created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-      SQL
+      @db.create_table?(:channels) do
+        primary_key :id
+        String :name, size: 255, null: false, unique: true
+        Integer :for_recorder, null: false, unique: true
+        Integer :for_syoboi, null: false, unique: true
+      end
+      @db.create_table?(:programs) do
+        primary_key :pid
+        Integer :tid, null: false
+        DateTime :start_time, null: false
+        DateTime :end_time, null: false
+        foreign_key :channel_id, :channels
+        String :count, size: 16, null: false
+        Integer :start_offset, null: false
+        String :subtitle, size: 255
+        String :title, size: 255
+        String :comment, size: 255
+      end
+      @db.create_table?(:jobs) do
+        foreign_key :pid, :programs, primary_key: true
+        DateTime :enqueued_at, null: false
+        DateTime :finished_at
+        DateTime :created_at, null: false
+      end
+      @db.create_table?(:tracking_titles) do
+        Integer :tid, primary_key: true
+        DateTime :created_at, null: false
+      end
     end
     private :prepare_tables
 
