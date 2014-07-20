@@ -9,6 +9,10 @@ describe Kaede::Updater do
   let(:syobocal) { Kaede::SyoboiCalendar.new }
   let(:updater) { described_class.new(db, syobocal) }
 
+  before do
+    db.prepare_tables
+  end
+
   describe '#update' do
     let(:channel) { Kaede::Channel.new(nil, 'MX', 9, 19) }
     let(:tracking_tid) { 3225 }

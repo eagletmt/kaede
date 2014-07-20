@@ -10,7 +10,6 @@ module Kaede
 
     def initialize(path)
       @db = Sequel.connect(path)
-      prepare_tables
     end
 
     def prepare_tables
@@ -43,7 +42,6 @@ module Kaede
         DateTime :created_at, null: false
       end
     end
-    private :prepare_tables
 
     def get_jobs
       @db.from(:jobs).select(:pid, :enqueued_at).where(finished_at: nil).where(Sequel.qualify(:jobs, :enqueued_at) >= Time.now).order(:enqueued_at).to_a

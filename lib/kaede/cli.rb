@@ -69,6 +69,15 @@ module Kaede
       puts DBus::Generator.new.generate_policy(user)
     end
 
+    desc 'db-prepare', 'Create tables'
+    def db_prepare
+      require 'kaede/database'
+      load_config
+
+      db = Kaede::Database.new(Kaede.config.database_url)
+      db.prepare_tables
+    end
+
     private
 
     def load_config
