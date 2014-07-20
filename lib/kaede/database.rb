@@ -49,10 +49,10 @@ module Kaede
 
     def update_job(pid, enqueued_at)
       @db.transaction do
-        begin
-          @db.from(:jobs).insert(pid: pid, enqueued_at: enqueued_at, created_at: Time.now)
-        rescue Sequel::UniqueConstraintViolation
+        if @db.from(:jobs).where(pid: pid).select(1).first
           @db.from(:jobs).where(pid: pid).update(enqueued_at: enqueued_at)
+        else
+          @db.from(:jobs).insert(pid: pid, enqueued_at: enqueued_at, created_at: Time.now)
         end
       end
     end
@@ -114,10 +114,10 @@ module Kaede
         comment: program.comment,
       }
       @db.transaction do
-        begin
-          @db.from(:programs).insert(attributes.merge(pid: program.pid))
-        rescue Sequel::UniqueConstraintViolation
+        if @db.from(:programs).where(pid: program.pid).select(1).first
           @db.from(:programs).where(pid: program.pid).update(attributes)
+        else
+          @db.from(:programs).insert(attributes.merge(pid: program.pid))
         end
       end
     end
