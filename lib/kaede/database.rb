@@ -1,5 +1,5 @@
 require 'forwardable'
-require 'sqlite3'
+require 'sequel'
 require 'kaede/channel'
 require 'kaede/program'
 
@@ -9,8 +9,7 @@ module Kaede
     def_delegators :@db, :transaction
 
     def initialize(path)
-      @db = SQLite3::Database.new(path.to_s)
-      @db.send(:set_boolean_pragma, 'foreign_keys', true)
+      @db = Sequel.connect(path)
       prepare_tables
     end
 
