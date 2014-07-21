@@ -9,8 +9,11 @@ require 'kaede/scheduler'
 require 'kaede/dbus'
 
 describe Kaede::Scheduler do
-  let(:db_file) { Tempfile.open('kaede.db') }
-  let(:db) { Kaede::Database.new(db_file.path) }
+  let(:db) { Kaede::Database.new(DatabaseHelper.database_url) }
+
+  before do
+    db.prepare_tables
+  end
 
   describe '.start' do
     let(:program) { Kaede::Program.new(1234, 5678, Time.now, Time.now + 30, nil, 19, 9, '5.5', 0, 'sub', 'title', '') }

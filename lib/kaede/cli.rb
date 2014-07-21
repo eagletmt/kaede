@@ -16,7 +16,7 @@ module Kaede
       require 'kaede/scheduler'
       load_config
 
-      db = Kaede::Database.new(Kaede.config.database_path)
+      db = Kaede::Database.new(Kaede.config.database_url)
       Kaede::Scheduler.setup(db)
       Kaede::Scheduler.start
     end
@@ -37,7 +37,7 @@ module Kaede
       require 'kaede/channel'
       load_config
 
-      db = Kaede::Database.new(Kaede.config.database_path)
+      db = Kaede::Database.new(Kaede.config.database_url)
       db.add_channel(Channel.new(nil, name, options[:recorder], options[:syoboi]))
     end
 
@@ -46,7 +46,7 @@ module Kaede
       require 'kaede/database'
       load_config
 
-      db = Kaede::Database.new(Kaede.config.database_path)
+      db = Kaede::Database.new(Kaede.config.database_url)
       db.add_tracking_title(tid.to_i)
     end
 
@@ -57,7 +57,7 @@ module Kaede
       require 'kaede/updater'
       load_config
 
-      db = Kaede::Database.new(Kaede.config.database_path)
+      db = Kaede::Database.new(Kaede.config.database_url)
       syobocal = Kaede::SyoboiCalendar.new
       Kaede::Updater.new(db, syobocal).update
     end
@@ -67,6 +67,15 @@ module Kaede
       require 'kaede/dbus/generator'
 
       puts DBus::Generator.new.generate_policy(user)
+    end
+
+    desc 'db-prepare', 'Create tables'
+    def db_prepare
+      require 'kaede/database'
+      load_config
+
+      db = Kaede::Database.new(Kaede.config.database_url)
+      db.prepare_tables
     end
 
     private

@@ -5,9 +5,13 @@ require 'kaede/syoboi_calendar'
 require 'kaede/updater'
 
 describe Kaede::Updater do
-  let(:db) { Kaede::Database.new(':memory:') }
+  let(:db) { Kaede::Database.new(DatabaseHelper.database_url) }
   let(:syobocal) { Kaede::SyoboiCalendar.new }
   let(:updater) { described_class.new(db, syobocal) }
+
+  before do
+    db.prepare_tables
+  end
 
   describe '#update' do
     let(:channel) { Kaede::Channel.new(nil, 'MX', 9, 19) }

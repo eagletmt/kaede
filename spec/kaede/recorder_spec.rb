@@ -8,7 +8,7 @@ require 'kaede/updater'
 describe Kaede::Recorder do
   let(:notifier) { double('Notifier') }
   let(:recorder) { described_class.new(notifier) }
-  let(:db) { Kaede::Database.new(':memory:') }
+  let(:db) { Kaede::Database.new(DatabaseHelper.database_url) }
   let(:job) { db.get_jobs.first }
   let(:program) { db.get_program(job[:pid]) }
   let(:duration) { 30 }
@@ -24,6 +24,7 @@ describe Kaede::Recorder do
   let(:cabinet_ass_path) { recorder.cabinet_ass_path(program) }
 
   before do
+    db.prepare_tables
     db.add_channel(Kaede::Channel.new(nil, 'MX', 9, 19))
     channel = db.get_channels.first
     program = Kaede::Program.new(1234, 5678, Time.now, Time.now + duration, nil, 19, 9, '6', 0, 'sub', 'title', 'comment')
