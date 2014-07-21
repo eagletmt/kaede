@@ -22,7 +22,7 @@ Or install it yourself as:
 
 ## Usage
 ### Requirements
-- sqlite3
+- SQLite3 or PostgreSQL
 - redis
 - dbus
 - recpt1
@@ -40,6 +40,8 @@ sudo mv kaede.conf /etc/dbus-1/system.d/kaede.conf
 
 cp kaede.rb.sample kaede.rb
 vim kaede.rb
+gem install pg  # gem install sqlite3
+kaede db-prepare
 
 cp kaede.service.sample kaede.service
 vim kaede.service
