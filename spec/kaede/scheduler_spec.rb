@@ -9,8 +9,7 @@ require 'kaede/scheduler'
 require 'kaede/dbus'
 
 describe Kaede::Scheduler do
-  let(:db_file) { Tempfile.open('kaede.db') }
-  let(:db) { Kaede::Database.new("sqlite://#{db_file.path}") }
+  let(:db) { Kaede::Database.new(DatabaseHelper.database_url) }
 
   before do
     db.prepare_tables

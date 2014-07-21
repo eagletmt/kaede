@@ -8,7 +8,7 @@ require 'kaede/updater'
 describe Kaede::Recorder do
   let(:notifier) { double('Notifier') }
   let(:recorder) { described_class.new(notifier) }
-  let(:db) { Kaede::Database.new('sqlite:/') }
+  let(:db) { Kaede::Database.new(DatabaseHelper.database_url) }
   let(:job) { db.get_jobs.first }
   let(:program) { db.get_program(job[:pid]) }
   let(:duration) { 30 }

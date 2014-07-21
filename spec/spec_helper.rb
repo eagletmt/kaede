@@ -1,4 +1,5 @@
 require 'coveralls'
+require 'sequel'
 require 'simplecov'
 require 'timecop'
 require 'tmpdir'
@@ -38,10 +39,43 @@ RSpec.configure do |config|
     @topdir = Pathname.new(__FILE__).parent
   end
 
+  config.before :suite do
+    DatabaseHelper.clean
+  end
+  config.after :each do
+    DatabaseHelper.clean
+  end
+
   config.around :each do |example|
     Dir.mktmpdir('kaede') do |dir|
       @tmpdir = Pathname.new(dir)
       example.run
+    end
+  end
+end
+
+module DatabaseHelper
+  module_function
+
+  def database_url
+    if ENV['DB'] == 'postgres'
+      "postgres://localhost/kaede_test?user=kaede"
+    else
+      'sqlite://kaede.db'
+    end
+  end
+
+  def clean
+    db = Sequel.connect(database_url)
+    [
+      :tracking_titles,
+      :jobs,
+      :programs,
+      :channels,
+    ].each do |table|
+      if db.table_exists?(table)
+        db.from(table).delete
+      end
     end
   end
 end
