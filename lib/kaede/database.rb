@@ -1,5 +1,6 @@
 require 'forwardable'
 require 'sequel'
+require 'retryable'
 require 'kaede/channel'
 require 'kaede/program'
 
@@ -44,21 +45,27 @@ module Kaede
     end
 
     def get_jobs
-      @db.from(:jobs).select(:pid, :enqueued_at).where(finished_at: nil).where(Sequel.qualify(:jobs, :enqueued_at) >= Time.now).order(:enqueued_at).to_a
+      retry_on_disconnected do
+        @db.from(:jobs).select(:pid, :enqueued_at).where(finished_at: nil).where(Sequel.qualify(:jobs, :enqueued_at) >= Time.now).order(:enqueued_at).to_a
+      end
     end
 
     def update_job(pid, enqueued_at)
-      @db.transaction do
-        if @db.from(:jobs).where(pid: pid).select(1).first
-          @db.from(:jobs).where(pid: pid).update(enqueued_at: enqueued_at)
-        else
-          @db.from(:jobs).insert(pid: pid, enqueued_at: enqueued_at, created_at: Time.now)
+      retry_on_disconnected do
+        @db.transaction do
+          if @db.from(:jobs).where(pid: pid).select(1).first
+            @db.from(:jobs).where(pid: pid).update(enqueued_at: enqueued_at)
+          else
+            @db.from(:jobs).insert(pid: pid, enqueued_at: enqueued_at, created_at: Time.now)
+          end
         end
       end
     end
 
     def delete_job(pid)
-      @db.from(:jobs).where(pid: pid).delete
+      retry_on_disconnected do
+        @db.from(:jobs).where(pid: pid).delete
+      end
     end
 
     def get_program(pid)
@@ -67,38 +74,46 @@ module Kaede
 
     def get_programs(pids)
       programs = {}
-      @db.from(:programs).inner_join(:channels, [[channel_id: :id]]).where(pid: pids).each do |row|
-        program = Program.new(
-          row[:pid],
-          row[:tid],
-          row[:start_time],
-          row[:end_time],
-          row[:name],
-          row[:for_syoboi],
-          row[:for_recorder],
-          row[:count],
-          row[:start_offset],
-          row[:subtitle],
-          row[:title],
-          row[:comment],
-        )
-        programs[program.pid] = program
+      retry_on_disconnected do
+        @db.from(:programs).inner_join(:channels, [[channel_id: :id]]).where(pid: pids).each do |row|
+          program = Program.new(
+            row[:pid],
+            row[:tid],
+            row[:start_time],
+            row[:end_time],
+            row[:name],
+            row[:for_syoboi],
+            row[:for_recorder],
+            row[:count],
+            row[:start_offset],
+            row[:subtitle],
+            row[:title],
+            row[:comment],
+          )
+          programs[program.pid] = program
+        end
       end
       programs
     end
 
     def mark_finished(pid)
-      @db.from(:jobs).where(pid: pid).update(finished_at: Time.now)
+      retry_on_disconnected do
+        @db.from(:jobs).where(pid: pid).update(finished_at: Time.now)
+      end
     end
 
     def get_channels
-      @db.from(:channels).map do |row|
-        Channel.new(row[:id], row[:name], row[:for_recorder], row[:for_syoboi])
+      retry_on_disconnected do
+        @db.from(:channels).map do |row|
+          Channel.new(row[:id], row[:name], row[:for_recorder], row[:for_syoboi])
+        end
       end
     end
 
     def add_channel(channel)
-      @db.from(:channels).insert(name: channel.name, for_recorder: channel.for_recorder, for_syoboi: channel.for_syoboi)
+      retry_on_disconnected do
+        @db.from(:channels).insert(name: channel.name, for_recorder: channel.for_recorder, for_syoboi: channel.for_syoboi)
+      end
     end
 
     def update_program(program, channel)
@@ -113,23 +128,55 @@ module Kaede
         title: program.title,
         comment: program.comment,
       }
-      @db.transaction do
-        if @db.from(:programs).where(pid: program.pid).select(1).first
-          @db.from(:programs).where(pid: program.pid).update(attributes)
-        else
-          @db.from(:programs).insert(attributes.merge(pid: program.pid))
+      retry_on_disconnected do
+        @db.transaction do
+          if @db.from(:programs).where(pid: program.pid).select(1).first
+            @db.from(:programs).where(pid: program.pid).update(attributes)
+          else
+            @db.from(:programs).insert(attributes.merge(pid: program.pid))
+          end
         end
       end
     end
 
     def add_tracking_title(tid)
-      @db.from(:tracking_titles).insert(tid: tid, created_at: Time.now)
+      retry_on_disconnected do
+        @db.from(:tracking_titles).insert(tid: tid, created_at: Time.now)
+      end
     end
 
     def get_tracking_titles
-      @db.from(:tracking_titles).select(:tid).map do |row|
-        row[:tid]
+      retry_on_disconnected do
+        @db.from(:tracking_titles).select(:tid).map do |row|
+          row[:tid]
+        end
       end
+    end
+
+    private
+
+    def retry_on_disconnected(&block)
+      retry_for_disconnection { retry_for_each_connection(&block) }
+    end
+
+    def retry_for_disconnection(&block)
+      retryable(
+        tries: 5,
+        sleep: lambda { |n| 2**n },
+        on: Sequel::DatabaseDisconnectError,
+        exception_cb: lambda { |e| $stderr.puts "[#{Thread.current.object_id}] retry_for_disconnection: #{e.class}: #{e.message}" },
+        &block
+      )
+    end
+
+    def retry_for_each_connection(&block)
+      retryable(
+        tries: @db.pool.max_size,
+        sleep: 0,
+        on: Sequel::DatabaseDisconnectError,
+        exception_cb: lambda { |e| $stderr.puts "[#{Thread.current.object_id}] retry_for_each_connection: #{e.class}: #{e.message}" },
+        &block
+      )
     end
   end
 end

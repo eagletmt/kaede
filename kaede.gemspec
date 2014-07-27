@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "webmock"
   spec.add_dependency "nokogiri"
   spec.add_dependency "redis"
+  spec.add_dependency "retryable"
   spec.add_dependency "ruby-dbus"
   spec.add_dependency "sequel"
   spec.add_dependency "sleepy_penguin"

@@ -7,7 +7,7 @@ Kaede.configure do |config|
   config.assdumper = '/home/eagletmt/bin/assdumper'
   config.clean_ts = '/home/eagletmt/bin/clean-ts'
   config.statvfs = '/home/eagletmt/bin/statvfs'
-  config.database_path = '/home/eagletmt/work/kaede/kaede.db'
+  config.database_url = 'postgres://localhost/kaede?user=kaede'
   config.record_dir = '/home/pt'
   config.cache_dir = '/home/pt/cache'
   config.cabinet_dir = '/home/pt'
