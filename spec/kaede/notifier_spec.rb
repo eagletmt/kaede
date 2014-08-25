@@ -10,8 +10,8 @@ describe Kaede::Notifier do
   let(:program) { Kaede::Program.new(1234, 5678, Time.now, Time.now + duration, nil, 19, 9, '6', 0, 'sub', 'title', 'comment') }
 
   describe '#notify_before_record' do
-    it 'tweets' do
-      expect(notifier).to receive(:tweet).with(/title #6 sub/)
+    it 'logs to fluentd' do
+      expect(notifier).to receive(:log).with(:before_record, message: /title #6 sub/)
       notifier.notify_before_record(program)
     end
   end
@@ -27,8 +27,8 @@ describe Kaede::Notifier do
       notifier.record_path(program).open('w') {}
     end
 
-    it 'tweets' do
-      expect(notifier).to receive(:tweet).with(/title #6 sub.*0\.00GB/)
+    it 'logs to fluentd' do
+      expect(notifier).to receive(:log).with(:after_record, message: /title #6 sub.*0\.00GB/)
       notifier.notify_after_record(program)
     end
   end
@@ -37,24 +37,9 @@ describe Kaede::Notifier do
     class MyException < Exception
     end
 
-    it 'tweets' do
-      Kaede.configure do |config|
-        config.twitter_target = nil
-      end
-
-      expect(notifier).to receive(:tweet).with(/MyException で失敗した/)
+    it 'logs to fluentd' do
+      expect(notifier).to receive(:log).with(:exception, message: /MyException で失敗した/)
       notifier.notify_exception(MyException.new, program)
-    end
-
-    context 'when twitter_target is set' do
-      it 'tweets to twitter_target' do
-        Kaede.configure do |config|
-          config.twitter_target = 'eagletmt'
-        end
-
-        expect(notifier).to receive(:tweet).with(/\A@eagletmt .* MyException で失敗した/)
-        notifier.notify_exception(MyException.new, program)
-      end
     end
   end
 end
