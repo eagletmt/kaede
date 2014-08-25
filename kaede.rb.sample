@@ -13,13 +13,9 @@ Kaede.configure do |config|
   config.cabinet_dir = '/home/pt'
   config.redis = Redis.new(db: 1)
   config.redis_queue = 'jobs'
-  config.twitter = Twitter::REST::Client.new do |config|
-    config.consumer_key = 'CONSUMER_KEY'
-    config.consumer_secret = 'CONSUMER_SECRET'
-    config.access_token = 'ACCESS_TOKEN'
-    config.access_token_secret = 'ACCESS_TOKEN_SECRET'
-  end
-  config.twitter_target = 'eagletmt'
+  config.fluent_tag_prefix = 'kaede'
+  config.fluent_host = 'localhost'
+  config.fluent_port = 24224
 end
 
 # vim: set ft=ruby:

@@ -1,50 +1,45 @@
 # coding: utf-8
 require 'kaede'
+require 'fluent-logger'
 
 module Kaede
   class Notifier
     def initialize
-      @twitter = Kaede.config.twitter
-      @twitter_target = Kaede.config.twitter_target
+      if Kaede.config.fluent_host && Kaede.config.fluent_port
+        @fluent_logger = Fluent::Logger::FluentLogger.new(
+          Kaede.config.fluent_tag_prefix,
+          host: Kaede.config.fluent_host,
+          port: Kaede.config.fluent_port,
+        )
+      else
+        @fluent_logger = nil
+      end
     end
 
     def notify_before_record(program)
-      tweet("#{format_title(program)}を録画する")
+      log(:before_record, message: "#{format_title(program)}を録画する")
     end
 
     def notify_after_record(program)
-      tweet(
-        sprintf(
-          "%sを録画した。ファイルサイズ約%.2fGB。残り約%dGB\n",
-          format_title(program),
-          ts_filesize(program),
-          available_disk,
-        )
+      message = sprintf(
+        "%sを録画した。ファイルサイズ約%.2fGB。残り約%dGB\n",
+        format_title(program),
+        ts_filesize(program),
+        available_disk,
       )
+      log(:after_record, message: message)
     end
 
     def notify_exception(exception, program)
-      msg = "#{program.title}(PID #{program.pid}) の録画中に #{exception.class} で失敗した……"
-      if @twitter_target
-        msg = "@#{@twitter_target} #{msg}"
-      end
-      tweet(msg)
+      log(:exception, message: "#{program.title}(PID #{program.pid}) の録画中に #{exception.class} で失敗した……")
     end
 
     def notify_duration_error(program, got_duration)
-      msg = sprintf('%s (PID:%d) の長さが%g秒しか無いようだが……', format_title(program), program.pid, got_duration)
-      if @twitter_target
-        msg = "@#{@twitter_target} #{msg}"
-      end
-      tweet(msg)
+      log(:duration_error, message: sprintf('%s (PID:%d) の長さが%g秒しか無いようだが……', format_title(program), program.pid, got_duration))
     end
 
     def notify_redo_error(program)
-      msg = "再実行にも失敗した…… (PID:#{program.pid})"
-      if @twitter_target
-        msg = "@#{@twitter_target} #{msg}"
-      end
-      tweet(msg)
+      log(:redo_error, message: "再実行にも失敗した…… (PID:#{program.pid})")
     end
 
     def format_title(program)
@@ -74,15 +69,9 @@ module Kaede
       size / (1024 * 1024 * 1024)
     end
 
-    def tweet(text)
-      return unless @twitter
-      Thread.start do
-        begin
-          @twitter.update(text)
-        rescue Exception => e
-          $stderr.puts "Failed to tweet: #{text}: #{e.class}: #{e.message}"
-        end
-      end
+    def log(tag, attributes)
+      return unless @fluent_logger
+      @fluent_logger.post(tag, attributes)
     end
   end
 end
