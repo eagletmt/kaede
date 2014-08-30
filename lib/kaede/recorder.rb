@@ -44,20 +44,43 @@ module Kaede
       Kaede.config.cabinet_dir.join("#{program.formatted_fname}.raw.ass")
     end
 
+    class TailF
+      def initialize(path, cmd, options = {})
+        @path = path
+        @cmd = cmd
+        @options = options
+      end
+
+      def spawn
+        @pipe_r, @pipe_w = IO.pipe
+        @tail_pid = Kernel.spawn('tail', '-f', @path.to_s, out: @pipe_w)
+        @pid = Kernel.spawn(*@cmd, @options.merge(in: @pipe_r))
+        @pipe_r.close
+        @pipe_w.close
+        self
+      end
+
+      def kill
+        Process.kill(:INT, @tail_pid)
+        Process.waitpid(@tail_pid)
+        Process.waitpid(@pid)
+      end
+    end
+
     def do_record(program)
-      spawn_recpt1(program)
-      spawn_tail(program)
-      spawn_b25(program)
-      spawn_ass(program)
-      spawn_repeater
-      wait_recpt1
-      finalize
+      recpt1_pid = spawn_recpt1(program)
+      b25_tailf = spawn_b25(program)
+      ass_tailf = spawn_ass(program)
+      Process.waitpid(recpt1_pid)
+      [b25_tailf, ass_tailf].each do |tailf|
+        tailf.kill
+      end
     end
 
     def spawn_recpt1(program)
       path = record_path(program)
       path.open('w') {}
-      @recpt1_pid = spawn(Kaede.config.recpt1.to_s, program.channel_for_recorder.to_s, calculate_duration(program).to_s, path.to_s)
+      spawn(Kaede.config.recpt1.to_s, program.channel_for_recorder.to_s, calculate_duration(program).to_s, path.to_s)
     end
 
     def calculate_duration(program)
@@ -73,48 +96,22 @@ module Kaede
       duration
     end
 
-    def spawn_tail(program)
-      @tail_pipe_r, @tail_pipe_w = IO.pipe
-      @tail_pid = spawn('tail', '-f', record_path(program).to_s, out: @tail_pipe_w)
-      @tail_pipe_w.close
-    end
-
     def spawn_b25(program)
-      @b25_pipe_r, @b25_pipe_w = IO.pipe
-      @b25_pid = spawn(Kaede.config.b25.to_s, '-v0', '-s1', '-m1', '/dev/stdin', cache_path(program).to_s, in: @b25_pipe_r)
-      @b25_pipe_r.close
+      TailF.new(record_path(program), [
+        Kaede.config.b25.to_s,
+        '-v0',
+        '-s1',
+        '-m1',
+        '/dev/stdin',
+        cache_path(program).to_s,
+      ], {}).spawn
     end
 
     def spawn_ass(program)
-      @ass_pipe_r, @ass_pipe_w = IO.pipe
-      @ass_pid = spawn(Kaede.config.assdumper.to_s, '/dev/stdin', in: @ass_pipe_r, out: cache_ass_path(program).to_s)
-      @ass_pipe_r.close
-    end
-
-    BUFSIZ = 188 * 1024
-
-    def spawn_repeater
-      @repeater_thread = Thread.start do
-        while buf = @tail_pipe_r.read(BUFSIZ)
-          @b25_pipe_w.write(buf)
-          @ass_pipe_w.write(buf)
-        end
-        @tail_pipe_r.close
-        @b25_pipe_w.close
-        @ass_pipe_w.close
-      end
-    end
-
-    def wait_recpt1
-      Process.waitpid(@recpt1_pid)
-    end
-
-    def finalize
-      Process.kill(:INT, @tail_pid)
-      Process.waitpid(@tail_pid)
-      @repeater_thread.join
-      Process.waitpid(@b25_pid)
-      Process.waitpid(@ass_pid)
+      TailF.new(record_path(program), [
+        Kaede.config.assdumper.to_s,
+        '/dev/stdin',
+      ], out: cache_ass_path(program).to_s).spawn
     end
 
     def before_record(program)
