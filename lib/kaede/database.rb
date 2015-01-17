@@ -160,7 +160,7 @@ module Kaede
     end
 
     def retry_for_disconnection(&block)
-      retryable(
+      Retryable.retryable(
         tries: 5,
         sleep: lambda { |n| 2**n },
         on: Sequel::DatabaseDisconnectError,
@@ -170,7 +170,7 @@ module Kaede
     end
 
     def retry_for_each_connection(&block)
-      retryable(
+      Retryable.retryable(
         tries: @db.pool.max_size,
         sleep: 0,
         on: Sequel::DatabaseDisconnectError,
