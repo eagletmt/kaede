@@ -6,7 +6,7 @@ require 'tmpdir'
 require 'vcr'
 require 'webmock/rspec'
 
-SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+SimpleCov.formatters = [
   SimpleCov::Formatter::HTMLFormatter,
   Coveralls::SimpleCov::Formatter,
 ]
