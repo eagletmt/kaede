@@ -46,7 +46,7 @@ module Kaede
 
     def get_jobs
       retry_on_disconnected do
-        @db.from(:jobs).select(:pid, :enqueued_at).where(finished_at: nil).where(Sequel.qualify(:jobs, :enqueued_at) >= Time.now).order(:enqueued_at).to_a
+        @db.from(:jobs).select(:pid, :enqueued_at).where(Sequel.qualify(:jobs, :enqueued_at) >= Time.now).order(:enqueued_at).to_a
       end
     end
 

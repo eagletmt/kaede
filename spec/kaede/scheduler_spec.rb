@@ -16,18 +16,20 @@ describe Kaede::Scheduler do
   end
 
   describe '.start' do
-    let(:program) { Kaede::Program.new(1234, 5678, Time.now, Time.now + 30, nil, 19, 9, '5.5', 0, 'sub', 'title', '') }
+    let(:now) { Time.now }
+    let(:program) { Kaede::Program.new(1234, 5678, now, now + 30, nil, 19, 9, '5.5', 0, 'sub', 'title', '') }
 
     before do
       db.add_channel(Kaede::Channel.new(nil, 'MX', 9, 19))
       channel = db.get_channels.first
       db.update_program(program, channel)
-      db.update_job(program.pid, Time.now + 5)
+      db.update_job(program.pid, now + 5)
     end
 
     it 'works' do
       q = Queue.new
       allow_any_instance_of(Kaede::Recorder).to receive(:record) { |recorder, db, pid|
+        sleep 1 # Emulate recorder
         q.push(pid)
       }
       described_class.setup(db)
