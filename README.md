@@ -24,7 +24,6 @@ Or install it yourself as:
 ### Requirements
 - SQLite3 or PostgreSQL
 - redis
-- dbus
 - recpt1
 - b25
 - [statvfs](https://github.com/eagletmt/eagletmt-recutils/tree/master/statvfs)
@@ -35,9 +34,6 @@ Some of them should be optional, though.
 
 ### Setup
 ```sh
-kaede dbus-policy $KAEDE_USER > kaede.conf
-sudo mv kaede.conf /etc/dbus-1/system.d/kaede.conf
-
 cp kaede.rb.sample kaede.rb
 vim kaede.rb
 gem install pg  # gem install sqlite3

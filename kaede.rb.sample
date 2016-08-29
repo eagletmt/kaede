@@ -1,5 +1,10 @@
 require 'redis'
 require 'twitter'
+require 'logging'
+
+GRPC.extend(Logging.globally)
+Logging.logger.root.appenders = Logging.appenders.stdout
+Logging.logger.root.level = :debug
 
 Kaede.configure do |config|
   config.b25 = '/usr/bin/b25'

@@ -8,8 +8,6 @@ env:
   - DB=sqlite
   - DB=postgres
 before_script:
-  - bundle exec bin/kaede dbus-policy $USER > kaede.conf
-  - sudo mv kaede.conf /etc/dbus-1/system.d/kaede.conf
   - psql -c "CREATE ROLE kaede WITH LOGIN" -U postgres
   - psql -c "CREATE DATABASE kaede_test WITH OWNER = kaede ENCODING = 'UTF-8' TEMPLATE = template0" -U postgres
 matrix:

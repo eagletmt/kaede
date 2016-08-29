@@ -3,7 +3,7 @@ require 'redis'
 
 module Kaede
   class Config
-    attr_accessor :database_url, :redis, :redis_queue, :fluent_tag_prefix, :fluent_host, :fluent_port
+    attr_accessor :database_url, :redis, :redis_queue, :fluent_tag_prefix, :fluent_host, :fluent_port, :grpc_port
 
     path_attrs = [:b25, :recpt1, :assdumper, :clean_ts, :statvfs, :record_dir, :cache_dir, :cabinet_dir]
     attr_reader *path_attrs
@@ -26,6 +26,7 @@ module Kaede
       self.cabinet_dir = basedir.join('cabinet')
       self.redis = Redis.new
       self.redis_queue = 'jobs'
+      self.grpc_port = 'localhost:4195'
     end
   end
 end

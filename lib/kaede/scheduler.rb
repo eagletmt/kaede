@@ -1,11 +1,7 @@
-require 'dbus'
 require 'thread'
 require 'sleepy_penguin'
-require 'kaede/dbus'
-require 'kaede/dbus/main'
-require 'kaede/dbus/program'
-require 'kaede/dbus/scheduler'
 require 'kaede/notifier'
+require 'kaede/scheduler_service'
 
 module Kaede
   module Scheduler
@@ -77,14 +73,14 @@ module Kaede
     def start_epoll
       epoll = prepare_epoll
       puts "Loaded #{@timerfds.size} schedules"
-      start_dbus
+      start_grpc
 
       catch(:reload) do
         epoll_loop(epoll)
       end
     ensure
       epoll.close
-      stop_dbus
+      stop_grpc
     end
 
     def epoll_loop(epoll)
@@ -110,70 +106,32 @@ module Kaede
       end
     end
 
-    def start_dbus
-      bus = ::DBus.system_bus
-      service = bus.request_service(DBus::DESTINATION)
-      dbus_export_programs(service)
-      service.export(DBus::Scheduler.new(@reload_event, @stop_event))
-
-      @dbus_thread = start_dbus_loop(bus)
+    def start_grpc
+      service = SchedulerService.new(@reload_event, @stop_event)
+      load_grpc_programs(service)
+      @grpc_thread = start_grpc_loop(service)
     end
 
-    def dbus_export_programs(service)
+    def load_grpc_programs(service)
       programs = @db.get_programs(@timerfds.values.map { |_, pid| pid })
+      now = Time.now
       @timerfds.each_value do |tfd, pid|
         _, value = tfd.gettime
         program = programs[pid]
-        obj = DBus::Program.new(program, Time.now + value)
-        service.export(obj)
-
-        # ruby-dbus doesn't emit properties when Introspect is requested.
-        # Kaede manually creates Introspect XML so that `gdbus introspect` outputs properties.
-        node = service.get_node(obj.path)
-        node.singleton_class.class_eval do
-          define_method :to_xml do
-            obj.to_xml
-          end
-        end
+        service.add_program(programs[pid], now + value)
       end
     end
 
-    def start_dbus_loop(bus)
-      @dbus_main = DBus::Main.new
-      @dbus_main << bus
-      Thread.start do
-        max_retries = 10
-        retries = 0
-        begin
-          @dbus_main.loop
-        rescue ::DBus::Connection::NameRequestError => e
-          puts "#{e.class}: #{e.message}"
-          if retries < max_retries
-            retries += 1
-            sleep 1
-            retry
-          end
-        end
-      end
+    def start_grpc_loop(service)
+      @rpc_server = GRPC::RpcServer.new
+      @rpc_server.add_http2_port(Kaede.config.grpc_port, :this_port_is_insecure)
+      @rpc_server.handle(service)
+      Thread.start { @rpc_server.run }
     end
 
-    DBUS_STOP_TIMEOUT = 5
-    def stop_dbus
-      return unless @dbus_main
-      @dbus_main.quit
-      begin
-        unless @dbus_thread.join(DBUS_STOP_TIMEOUT)
-          @dbus_thread.kill
-        end
-      rescue Exception => e
-        $stderr.puts "Exception on DBus thread: #{e.class}: #{e.message}"
-        e.backtrace.each do |bt|
-          $stderr.puts "  #{bt}"
-        end
-      end
-      @dbus_main = nil
-      @dbus_thread = nil
-      ::DBus.system_bus.proxy.ReleaseName(DBus::DESTINATION)
+    def stop_grpc
+      @rpc_server.stop
+      @grpc_thread.join
     end
 
     def spawn_recorder(pid)
