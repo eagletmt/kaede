@@ -1,5 +1,4 @@
 require 'redis'
-require 'twitter'
 require 'logging'
 
 GRPC.extend(Logging.globally)
