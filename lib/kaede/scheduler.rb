@@ -106,7 +106,7 @@ module Kaede
     end
 
     def start_grpc
-      service = SchedulerService.new(@reload_event, @stop_event)
+      service = SchedulerService.new(@reload_event, @stop_event, @db)
       load_grpc_programs(service)
       @grpc_thread = start_grpc_loop(service)
     end

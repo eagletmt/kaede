@@ -18,6 +18,13 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
   add_message "kaede.grpc.GetProgramsOutput" do
     repeated :programs, :message, 1, "kaede.grpc.Program"
   end
+  add_message "kaede.grpc.AddTidInput" do
+    optional :tid, :uint32, 1
+  end
+  add_message "kaede.grpc.AddTidOutput" do
+    optional :tid, :uint32, 1
+    optional :title, :string, 2
+  end
   add_message "kaede.grpc.Program" do
     optional :pid, :uint32, 1
     optional :tid, :uint32, 2
@@ -43,6 +50,8 @@ module Kaede
     SchedulerStopOutput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.SchedulerStopOutput").msgclass
     GetProgramsInput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.GetProgramsInput").msgclass
     GetProgramsOutput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.GetProgramsOutput").msgclass
+    AddTidInput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.AddTidInput").msgclass
+    AddTidOutput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.AddTidOutput").msgclass
     Program = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.Program").msgclass
   end
 end

@@ -8,6 +8,7 @@ service Scheduler {
   rpc Reload(SchedulerReloadInput) returns (SchedulerReloadOutput) {}
   rpc Stop(SchedulerStopInput) returns (SchedulerStopOutput) {}
   rpc GetPrograms(GetProgramsInput) returns (GetProgramsOutput) {}
+  rpc AddTid(AddTidInput) returns (AddTidOutput) {}
 }
 
 message SchedulerReloadInput {}
@@ -17,6 +18,13 @@ message SchedulerStopOutput {}
 message GetProgramsInput {}
 message GetProgramsOutput {
   repeated Program programs = 1;
+}
+message AddTidInput {
+  uint32 tid = 1;
+}
+message AddTidOutput {
+  uint32 tid = 1;
+  string title = 2;
 }
 
 message Program {

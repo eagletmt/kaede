@@ -1,5 +1,6 @@
-require 'net/http'
 require 'cgi'
+require 'json'
+require 'net/http'
 require 'nokogiri'
 require 'kaede/program'
 
@@ -31,6 +32,16 @@ module Kaede
       case res
       when Net::HTTPOK
         Program.from_xml(Nokogiri::HTML.parse(res.body))
+      else
+        raise HttpError.new(res)
+      end
+    end
+
+    def title_medium(tid)
+      res = @http.get("/json.php?Req=TitleMedium&TID=#{tid.to_i}")
+      case res
+      when Net::HTTPOK
+        JSON.parse(res.body).fetch('Titles')
       else
         raise HttpError.new(res)
       end

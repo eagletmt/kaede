@@ -1,13 +1,17 @@
 require 'kaede/grpc/kaede_services_pb'
+require 'kaede/syoboi_calendar'
 
 module Kaede
   class SchedulerService < Grpc::Scheduler::Service
-    def initialize(reload_event, stop_event)
+    def initialize(reload_event, stop_event, db)
       super()
       @reload_event = reload_event
       @stop_event = stop_event
+      @db = db
       @programs = []
     end
+
+    # RPC methods
 
     def reload(_input, _call)
       @reload_event.incr(1)
@@ -24,6 +28,23 @@ module Kaede
         programs: @programs,
       )
     end
+
+    def add_tid(input, _call)
+      syobocal = Kaede::SyoboiCalendar.new
+      titles = syobocal.title_medium(input.tid)
+      if titles
+        title = titles.fetch(input.tid.to_s).fetch('Title')
+        @db.add_tracking_title(input.tid)
+        Grpc::AddTidOutput.new(
+          tid: input.tid,
+          title: title,
+        )
+      else
+        Grpc::AddTidOutput.new(tid: input.tid)
+      end
+    end
+
+    # Public methods
 
     def add_program(program, enqueued_at)
       @programs.push(

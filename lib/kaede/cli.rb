@@ -43,11 +43,8 @@ module Kaede
 
     desc 'add-tid TID', 'Add tracking title'
     def add_tid(tid)
-      require 'kaede/database'
       load_config
-
-      db = Kaede::Database.new(Kaede.config.database_url)
-      db.add_tracking_title(tid.to_i)
+      p stub.add_tid(Kaede::Grpc::AddTidInput.new(tid: tid.to_i)).to_h
     end
 
     desc 'reload-scheduler', 'Reload scheduler'
