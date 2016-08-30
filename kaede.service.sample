@@ -5,8 +5,8 @@ Description=Kaede Recorder
 WorkingDirectory=/home/eagletmt/work/kaede
 User=eagletmt
 ExecStart=/usr/bin/bundle exec bin/kaede scheduler -c kaede.rb
-ExecReload=/usr/bin/dbus-send --print-reply --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Reload
-ExecStop=/usr/bin/dbus-send --print-reply --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Stop
+ExecReload=/usr/bin/bundle exec bin/kaede reload-scheduler -c kaede.rb
+ExecStop=/usr/bin/bundle exec bin/kaede stop-scheduler -c kaede.rb
 Restart=always
 KillMode=none
 StandardOutput=journal

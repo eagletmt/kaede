@@ -6,7 +6,6 @@ require 'kaede'
 require 'kaede/database'
 require 'kaede/recorder'
 require 'kaede/scheduler'
-require 'kaede/dbus'
 
 describe Kaede::Scheduler do
   let(:db) { Kaede::Database.new(DatabaseHelper.database_url) }

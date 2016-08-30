@@ -50,6 +50,33 @@ module Kaede
       db.add_tracking_title(tid.to_i)
     end
 
+    desc 'reload-scheduler', 'Reload scheduler'
+    def reload_scheduler
+      require 'kaede/grpc/kaede_services_pb'
+      load_config
+
+      stub.reload(Kaede::Grpc::SchedulerReloadInput.new)
+    end
+
+    desc 'stop-scheduler', 'Stop scheduler'
+    def stop_scheduler
+      require 'kaede/grpc/kaede_services_pb'
+      load_config
+
+      stub.stop(Kaede::Grpc::SchedulerStopInput.new)
+    end
+
+    desc 'list-programs', 'List programs'
+    def list_programs
+      require 'kaede/grpc/kaede_services_pb'
+      require 'json'
+      load_config
+
+      stub.get_programs(Kaede::Grpc::GetProgramsInput.new).programs.each do |program|
+        show_program(program)
+      end
+    end
+
     desc 'update', 'Update jobs and programs by Syoboi Calendar'
     def update
       require 'kaede/database'
@@ -60,13 +87,6 @@ module Kaede
       db = Kaede::Database.new(Kaede.config.database_url)
       syobocal = Kaede::SyoboiCalendar.new
       Kaede::Updater.new(db, syobocal).update
-    end
-
-    desc 'dbus-policy USER', 'Generate dbus policy file'
-    def dbus_policy(user)
-      require 'kaede/dbus/generator'
-
-      puts DBus::Generator.new.generate_policy(user)
     end
 
     desc 'db-prepare', 'Create tables'
@@ -85,6 +105,23 @@ module Kaede
       if path = options[:config]
         load File.realpath(path)
       end
+    end
+
+    def stub
+      @stub ||= Kaede::Grpc::Scheduler::Stub.new(Kaede.config.grpc_port, :this_channel_is_insecure)
+    end
+
+    def show_program(program)
+      h = program.to_h
+      decode_time(h, :start_time)
+      decode_time(h, :end_time)
+      decode_time(h, :enqueued_at)
+      puts JSON.dump(h)
+    end
+
+    def decode_time(h, key)
+      t = h[key]
+      h[key] = Time.at(t.seconds, t.nanos / 1000)
     end
   end
 end

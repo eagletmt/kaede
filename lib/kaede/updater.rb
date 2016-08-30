@@ -1,7 +1,5 @@
-require 'dbus'
 require 'set'
-require 'kaede/dbus'
-require 'kaede/dbus/scheduler'
+require 'kaede/grpc/kaede_services_pb'
 
 module Kaede
   class Updater
@@ -52,10 +50,8 @@ module Kaede
     end
 
     def reload_scheduler
-      service = ::DBus.system_bus.service(DBus::DESTINATION)
-      scheduler = service.object(DBus::Scheduler::PATH)
-      scheduler.introspect
-      scheduler.Reload
+      stub = Grpc::Scheduler::Stub.new(Kaede.config.grpc_port, :this_channel_is_insecure)
+      stub.reload(Grpc::SchedulerReloadInput.new)
     end
   end
 end

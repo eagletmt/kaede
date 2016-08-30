@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package kaede.grpc;
+
+import "google/protobuf/timestamp.proto";
+
+service Scheduler {
+  rpc Reload(SchedulerReloadInput) returns (SchedulerReloadOutput) {}
+  rpc Stop(SchedulerStopInput) returns (SchedulerStopOutput) {}
+  rpc GetPrograms(GetProgramsInput) returns (GetProgramsOutput) {}
+}
+
+message SchedulerReloadInput {}
+message SchedulerReloadOutput {}
+message SchedulerStopInput {}
+message SchedulerStopOutput {}
+message GetProgramsInput {}
+message GetProgramsOutput {
+  repeated Program programs = 1;
+}
+
+message Program {
+  uint32 pid = 1;
+  uint32 tid = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  string channel_name = 5;
+  uint32 channel_for_syoboi = 6;
+  uint32 channel_for_recorder = 7;
+  string count = 8;
+  int32 start_offset = 9;
+  string subtitle = 10;
+  string title = 11;
+  string comment = 12;
+  google.protobuf.Timestamp enqueued_at = 13;
+}
