@@ -19,6 +19,7 @@ module Kaede
         rpc :Stop, SchedulerStopInput, SchedulerStopOutput
         rpc :GetPrograms, GetProgramsInput, GetProgramsOutput
         rpc :AddTid, AddTidInput, AddTidOutput
+        rpc :Update, UpdateInput, UpdateOutput
       end
 
       Stub = Service.rpc_stub_class

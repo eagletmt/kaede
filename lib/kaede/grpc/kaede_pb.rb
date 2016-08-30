@@ -25,6 +25,10 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
     optional :tid, :uint32, 1
     optional :title, :string, 2
   end
+  add_message "kaede.grpc.UpdateInput" do
+  end
+  add_message "kaede.grpc.UpdateOutput" do
+  end
   add_message "kaede.grpc.Program" do
     optional :pid, :uint32, 1
     optional :tid, :uint32, 2
@@ -52,6 +56,8 @@ module Kaede
     GetProgramsOutput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.GetProgramsOutput").msgclass
     AddTidInput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.AddTidInput").msgclass
     AddTidOutput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.AddTidOutput").msgclass
+    UpdateInput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.UpdateInput").msgclass
+    UpdateOutput = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.UpdateOutput").msgclass
     Program = Google::Protobuf::DescriptorPool.generated_pool.lookup("kaede.grpc.Program").msgclass
   end
 end

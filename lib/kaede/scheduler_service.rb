@@ -1,5 +1,6 @@
 require 'kaede/grpc/kaede_services_pb'
 require 'kaede/syoboi_calendar'
+require 'kaede/updater'
 
 module Kaede
   class SchedulerService < Grpc::Scheduler::Service
@@ -42,6 +43,13 @@ module Kaede
       else
         Grpc::AddTidOutput.new(tid: input.tid)
       end
+    end
+
+    def update(_input, _call)
+      syobocal = Kaede::SyoboiCalendar.new
+      Kaede::Updater.new(@db, syobocal).update
+      @reload_event.incr(1)
+      Grpc::UpdateOutput.new
     end
 
     # Public methods

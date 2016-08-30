@@ -33,8 +33,6 @@ module Kaede
         puts "Program #{job[:pid]} has gone away. Delete its job"
         @db.delete_job(job[:pid])
       end
-
-      reload_scheduler
     end
 
     def update_program(program, channel, tracking_titles)
@@ -47,11 +45,6 @@ module Kaede
     JOB_TIME_GAP = 15 # seconds
     def update_job_for(program)
       @db.update_job(program.pid, program.start_time + program.start_offset - JOB_TIME_GAP)
-    end
-
-    def reload_scheduler
-      stub = Grpc::Scheduler::Stub.new(Kaede.config.grpc_port, :this_channel_is_insecure)
-      stub.reload(Grpc::SchedulerReloadInput.new)
     end
   end
 end

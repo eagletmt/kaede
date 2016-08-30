@@ -9,6 +9,7 @@ service Scheduler {
   rpc Stop(SchedulerStopInput) returns (SchedulerStopOutput) {}
   rpc GetPrograms(GetProgramsInput) returns (GetProgramsOutput) {}
   rpc AddTid(AddTidInput) returns (AddTidOutput) {}
+  rpc Update(UpdateInput) returns (UpdateOutput) {}
 }
 
 message SchedulerReloadInput {}
@@ -26,6 +27,8 @@ message AddTidOutput {
   uint32 tid = 1;
   string title = 2;
 }
+message UpdateInput {}
+message UpdateOutput {}
 
 message Program {
   uint32 pid = 1;

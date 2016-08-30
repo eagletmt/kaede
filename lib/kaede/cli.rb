@@ -73,14 +73,8 @@ module Kaede
 
     desc 'update', 'Update jobs and programs by Syoboi Calendar'
     def update
-      require 'kaede/database'
-      require 'kaede/syoboi_calendar'
-      require 'kaede/updater'
       load_config
-
-      db = Kaede::Database.new(Kaede.config.database_url)
-      syobocal = Kaede::SyoboiCalendar.new
-      Kaede::Updater.new(db, syobocal).update
+      stub.update(Kaede::Grpc::UpdateInput.new)
     end
 
     desc 'db-prepare', 'Create tables'
