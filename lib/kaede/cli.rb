@@ -52,7 +52,6 @@ module Kaede
 
     desc 'reload-scheduler', 'Reload scheduler'
     def reload_scheduler
-      require 'kaede/grpc/kaede_services_pb'
       load_config
 
       stub.reload(Kaede::Grpc::SchedulerReloadInput.new)
@@ -60,7 +59,6 @@ module Kaede
 
     desc 'stop-scheduler', 'Stop scheduler'
     def stop_scheduler
-      require 'kaede/grpc/kaede_services_pb'
       load_config
 
       stub.stop(Kaede::Grpc::SchedulerStopInput.new)
@@ -68,7 +66,6 @@ module Kaede
 
     desc 'list-programs', 'List programs'
     def list_programs
-      require 'kaede/grpc/kaede_services_pb'
       require 'json'
       load_config
 
@@ -102,6 +99,7 @@ module Kaede
 
     def load_config
       require 'kaede'
+      require 'kaede/grpc/kaede_services_pb'
       if path = options[:config]
         load File.realpath(path)
       end
