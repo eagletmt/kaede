@@ -15,7 +15,6 @@ module Kaede
       @recorder_queue = Queue.new
       @recorder_waiter = start_recorder_waiter
       $0 = 'kaede-scheduler'
-      puts "Start #{Process.pid}"
     end
 
     POISON = Object.new
