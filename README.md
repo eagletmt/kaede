@@ -72,19 +72,19 @@ kaede update -c kaede.rb
 List schedules.
 
 ```sh
-gdbus introspect --system --dest cc.wanko.kaede1 --object-path /cc/wanko/kaede1/program -r
+kaede list-programs -c kaede.rb
 ```
 
 Reload schedules (usually not needed).
 
 ```sh
-dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Reload
+kaede reload-scheduler -c kaede.rb
 ```
 
 Stop scheduler. The current scheduler process exits after all the running recorders finish.
 
 ```sh
-dbus-send --system --dest=cc.wanko.kaede1 /cc/wanko/kaede1/scheduler cc.wanko.kaede1.Scheduler.Stop
+kaede stop-scheduler -c kaede.rb
 ```
 
 ## What recorder does
