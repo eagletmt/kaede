@@ -10,6 +10,7 @@ service Scheduler {
   rpc GetPrograms(GetProgramsInput) returns (GetProgramsOutput) {}
   rpc AddTid(AddTidInput) returns (AddTidOutput) {}
   rpc Update(UpdateInput) returns (UpdateOutput) {}
+  rpc AddChannel(AddChannelInput) returns (AddChannelOutput) {}
 }
 
 message SchedulerReloadInput {}
@@ -29,6 +30,14 @@ message AddTidOutput {
 }
 message UpdateInput {}
 message UpdateOutput {}
+message AddChannelInput {
+  string name = 1;
+  uint32 recorder = 2;
+  uint32 syoboi = 3;
+}
+message AddChannelOutput {
+  string error_message = 1;
+}
 
 message Program {
   uint32 pid = 1;

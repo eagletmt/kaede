@@ -1,3 +1,4 @@
+require 'kaede/channel'
 require 'kaede/grpc/kaede_services_pb'
 require 'kaede/syoboi_calendar'
 require 'kaede/updater'
@@ -43,6 +44,13 @@ module Kaede
       else
         Grpc::AddTidOutput.new(tid: input.tid)
       end
+    end
+
+    def add_channel(input, _call)
+      @db.add_channel(Channel.new(nil, input.name, input.recorder, input.syoboi))
+      Grpc::AddChannelOutput.new
+    rescue => e
+      Grpc::AddChannelOutput.new(error_message: e.message)
     end
 
     def update(_input, _call)

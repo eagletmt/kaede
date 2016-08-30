@@ -20,6 +20,7 @@ module Kaede
         rpc :GetPrograms, GetProgramsInput, GetProgramsOutput
         rpc :AddTid, AddTidInput, AddTidOutput
         rpc :Update, UpdateInput, UpdateOutput
+        rpc :AddChannel, AddChannelInput, AddChannelOutput
       end
 
       Stub = Service.rpc_stub_class

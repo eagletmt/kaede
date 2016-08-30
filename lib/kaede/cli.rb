@@ -33,12 +33,12 @@ module Kaede
       type: :numeric,
       required: true
     def add_channel(name)
-      require 'kaede/database'
-      require 'kaede/channel'
       load_config
-
-      db = Kaede::Database.new(Kaede.config.database_url)
-      db.add_channel(Channel.new(nil, name, options[:recorder], options[:syoboi]))
+      result = stub.add_channel(Kaede::Grpc::AddChannelInput.new(name: name, recorder: options[:recorder], syoboi: options[:syoboi]))
+      unless result.error_message.empty?
+        $stderr.puts result.error_message
+        exit 1
+      end
     end
 
     desc 'add-tid TID', 'Add tracking title'
