@@ -42,15 +42,17 @@ module Kaede
           title: title,
         )
       else
-        Grpc::AddTidOutput.new(tid: input.tid)
+        raise GRPC::BadStatus.new(GRPC::Core::StatusCodes::INVALID_ARGUMENT, 'No such TID')
       end
+    rescue Sequel::UniqueConstraintViolation => e
+      raise GRPC::BadStatus.new(GRPC::Core::StatusCodes::INVALID_ARGUMENT, e.message)
     end
 
     def add_channel(input, _call)
       @db.add_channel(Channel.new(nil, input.name, input.recorder, input.syoboi))
       Grpc::AddChannelOutput.new
-    rescue => e
-      Grpc::AddChannelOutput.new(error_message: e.message)
+    rescue Sequel::UniqueConstraintViolation => e
+      raise GRPC::BadStatus.new(GRPC::Core::StatusCodes::INVALID_ARGUMENT, e.message)
     end
 
     def update(_input, _call)

@@ -143,8 +143,6 @@ module Kaede
       retry_on_disconnected do
         @db.from(:tracking_titles).insert(tid: tid, created_at: Time.now)
       end
-    rescue Sequel::UniqueConstraintViolation => e
-      $stderr.puts "WARNING: #{e.class}: #{e.message}"
     end
 
     def get_tracking_titles

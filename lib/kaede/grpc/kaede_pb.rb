@@ -35,7 +35,6 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
     optional :syoboi, :uint32, 3
   end
   add_message "kaede.grpc.AddChannelOutput" do
-    optional :error_message, :string, 1
   end
   add_message "kaede.grpc.Program" do
     optional :pid, :uint32, 1

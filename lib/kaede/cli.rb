@@ -34,11 +34,7 @@ module Kaede
       required: true
     def add_channel(name)
       load_config
-      result = stub.add_channel(Kaede::Grpc::AddChannelInput.new(name: name, recorder: options[:recorder], syoboi: options[:syoboi]))
-      unless result.error_message.empty?
-        $stderr.puts result.error_message
-        exit 1
-      end
+      stub.add_channel(Kaede::Grpc::AddChannelInput.new(name: name, recorder: options[:recorder], syoboi: options[:syoboi]))
     end
 
     desc 'add-tid TID', 'Add tracking title'

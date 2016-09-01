@@ -35,9 +35,7 @@ message AddChannelInput {
   uint32 recorder = 2;
   uint32 syoboi = 3;
 }
-message AddChannelOutput {
-  string error_message = 1;
-}
+message AddChannelOutput {}
 
 message Program {
   uint32 pid = 1;
