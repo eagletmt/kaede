@@ -34,6 +34,8 @@ Some of them should be optional, though.
 
 ### Setup
 ```sh
+go get -u github.com/eagletmt/kaede/kaede-cli
+
 cp kaede.rb.sample kaede.rb
 vim kaede.rb
 gem install pg  # gem install sqlite3
@@ -50,15 +52,15 @@ sudo systemctl start kaede.service
 Add your available channels.
 
 ```sh
-kaede add-channel MX -c kaede.rb --recorder 16 --syoboi 19
-kaede add-channel BS11 -c kaede.rb --recorder 211 --syoboi 128
+kaede-cli add-channel --recorder 16 --syoboi 19 MX
+kaede-cli add-channel --recorder 211 --syoboi 128 BS11
 ...
 ```
 
 Add your favorite anime tids.
 
 ```sh
-kaede add-tid -c kaede.rb 3331
+kaede-cli add-tid 3331
 ...
 ```
 
@@ -66,25 +68,25 @@ kaede add-tid -c kaede.rb 3331
 Update programs and schedules. It supposed to be run periodically (by cron or systemd.timer).
 
 ```sh
-kaede update -c kaede.rb
+kaede-cli update
 ```
 
 List schedules.
 
 ```sh
-kaede list-programs -c kaede.rb
+kaede-cli list-programs
 ```
 
 Reload schedules (usually not needed).
 
 ```sh
-kaede reload-scheduler -c kaede.rb
+kaede-cli reload
 ```
 
 Stop scheduler. The current scheduler process exits after all the running recorders finish.
 
 ```sh
-kaede stop-scheduler -c kaede.rb
+kaede-cli stop
 ```
 
 ## What recorder does
