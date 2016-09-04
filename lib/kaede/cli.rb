@@ -21,58 +21,6 @@ module Kaede
       Kaede::Scheduler.start
     end
 
-    desc 'add-channel NAME', 'Add available channel'
-    option :recorder,
-      desc: 'Channel number for the recorder',
-      banner: 'CH',
-      type: :numeric,
-      required: true
-    option :syoboi,
-      desc: 'Channel number for Syoboi Calendar',
-      banner: 'CH',
-      type: :numeric,
-      required: true
-    def add_channel(name)
-      load_config
-      stub.add_channel(Kaede::Grpc::AddChannelInput.new(name: name, recorder: options[:recorder], syoboi: options[:syoboi]))
-    end
-
-    desc 'add-tid TID', 'Add tracking title'
-    def add_tid(tid)
-      load_config
-      p stub.add_tid(Kaede::Grpc::AddTidInput.new(tid: tid.to_i)).to_h
-    end
-
-    desc 'reload-scheduler', 'Reload scheduler'
-    def reload_scheduler
-      load_config
-
-      stub.reload(Kaede::Grpc::SchedulerReloadInput.new)
-    end
-
-    desc 'stop-scheduler', 'Stop scheduler'
-    def stop_scheduler
-      load_config
-
-      stub.stop(Kaede::Grpc::SchedulerStopInput.new)
-    end
-
-    desc 'list-programs', 'List programs'
-    def list_programs
-      require 'json'
-      load_config
-
-      stub.get_programs(Kaede::Grpc::GetProgramsInput.new).programs.each do |program|
-        show_program(program)
-      end
-    end
-
-    desc 'update', 'Update jobs and programs by Syoboi Calendar'
-    def update
-      load_config
-      stub.update(Kaede::Grpc::UpdateInput.new)
-    end
-
     desc 'db-prepare', 'Create tables'
     def db_prepare
       require 'kaede/database'
@@ -90,23 +38,6 @@ module Kaede
       if path = options[:config]
         load File.realpath(path)
       end
-    end
-
-    def stub
-      @stub ||= Kaede::Grpc::Scheduler::Stub.new(Kaede.config.grpc_port, :this_channel_is_insecure)
-    end
-
-    def show_program(program)
-      h = program.to_h
-      decode_time(h, :start_time)
-      decode_time(h, :end_time)
-      decode_time(h, :enqueued_at)
-      puts JSON.dump(h)
-    end
-
-    def decode_time(h, key)
-      t = h[key]
-      h[key] = Time.at(t.seconds, t.nanos / 1000)
     end
   end
 end
