@@ -157,7 +157,7 @@ func addTid(c *cli.Context, client pb.SchedulerClient) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Added %d: %s", result.Tid, result.Title)
+	fmt.Printf("Added %d: %s\n", result.Tid, result.Title)
 	return nil
 }
 
