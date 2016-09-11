@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -152,8 +153,12 @@ func addTid(c *cli.Context, client pb.SchedulerClient) error {
 	if err != nil {
 		return err
 	}
-	_, err = client.AddTid(context.Background(), &pb.AddTidInput{Tid: uint32(tid)})
-	return err
+	result, err := client.AddTid(context.Background(), &pb.AddTidInput{Tid: uint32(tid)})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Added %d: %s", result.Tid, result.Title)
+	return nil
 }
 
 func update(_ *cli.Context, client pb.SchedulerClient) error {
