@@ -78,7 +78,9 @@ module Kaede
         epoll_loop(epoll)
       end
     ensure
-      epoll.close
+      if epoll
+        epoll.close
+      end
       stop_grpc
     end
 
@@ -129,8 +131,10 @@ module Kaede
     end
 
     def stop_grpc
-      @rpc_server.stop
-      @grpc_thread.join
+      if @rpc_server
+        @rpc_server.stop
+        @grpc_thread.join
+      end
     end
 
     def spawn_recorder(pid)
