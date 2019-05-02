@@ -75,7 +75,7 @@ module Kaede
     def get_programs(pids)
       programs = {}
       retry_on_disconnected do
-        @db.from(:programs).inner_join(:channels, [[channel_id: :id]]).where(pid: pids).each do |row|
+        @db.from(:programs).inner_join(:channels, id: :channel_id).where(pid: pids).each do |row|
           program = Program.new(
             row[:pid],
             row[:tid],
